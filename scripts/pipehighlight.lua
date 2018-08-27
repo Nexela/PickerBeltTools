@@ -5,8 +5,8 @@
 -- "contact": "TheStaplergun 2.0#6920 (DISCORD)",
 -- "description": "Adds new functionality to underground piping.",
 --]]
-local Event = require('__stdlib__/event/event')
-local Position = require('__stdlib__/area/position')
+local Event = require('__stdlib__/stdlib/event/event')
+local Position = require('__stdlib__/stdlib/area/position')
 
 local function show_underground_sprites(event)
     local player = game.players[event.player_index]

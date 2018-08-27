@@ -1,4 +1,4 @@
-local Data = require('__stdlib__/data/data')
+local Data = require('__stdlib__/stdlib/data/data')
 
 local pipe = Data('wall-remnants', 'corpse'):copy('pipe-marker-box'):set_fields {
     name = 'pipe-marker-box',

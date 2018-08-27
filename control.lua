@@ -1,8 +1,8 @@
-local Event = require('__stdlib__/event/event')
+local Event = require('__stdlib__/stdlib/event/event')
 Event.protected_mode = false
 
-local Player = require('__stdlib__/event/player').register_events()
-local Force = require('__stdlib__/event/force').register_events()
+local Player = require('__stdlib__/stdlib/event/player').register_events()
+local Force = require('__stdlib__/stdlib/event/force').register_events()
 
 local function on_init()
     Player.init()

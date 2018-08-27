@@ -3,9 +3,9 @@
 -------------------------------------------------------------------------------
 -- Code modified from GotLag's Orphan Finder: https://mods.factorio.com/mods/GotLag/Orphan%20Finder
 
-local Event = require('__stdlib__/event/event')
-local Player = require('__stdlib__/event/player')
-local Position = require('__stdlib__/area/position')
+local Event = require('__stdlib__/stdlib/event/event')
+local Player = require('__stdlib__/stdlib/event/player')
+local Position = require('__stdlib__/stdlib/area/position')
 
 local types = {
     ['underground-belt'] = 'underground-belt',

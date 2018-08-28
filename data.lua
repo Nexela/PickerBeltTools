@@ -1,11 +1,6 @@
 data:extend {
     {
         type = 'custom-input',
-        name = 'picker-pipe-cleaner',
-        key_sequence = 'CONTROL + DELETE'
-    },
-    {
-        type = 'custom-input',
         name = 'picker-beltbrush-corners',
         key_sequence = 'CONTROL + SHIFT + R'
     },

@@ -527,11 +527,11 @@ local function adjust_pad(event)
     end
 end
 local function register()
-    local index = remote.call('PickerExtended', 'get_adjustment_pad_id')
+    local index = remote.call('PickerAtheneum', 'get_adjustment_pad_id')
     Event.register(index, adjust_pad)
 end
-Event.register(Event.core_events.init, register)
-Event.register(Event.core_events.load, register)
+Event.register({Event.core_events.init, Event.core_events.load}, register)
+--Event.register(Event.core_events.load, register)
 
 
 

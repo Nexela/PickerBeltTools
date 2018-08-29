@@ -7,8 +7,8 @@ local Player = require('__stdlib__/stdlib/event/player')
 local Position = require('__stdlib__/stdlib/area/position')
 local Area = require('__stdlib__/stdlib/area/area')
 local Inventory = require('__stdlib__/stdlib/entity/inventory')
-local Pad = require('__PickerExtended__/utils/adjustment-pad')
-local lib = require('__PickerExtended__/utils/lib')
+local Pad = require('__PickerAtheneum__/utils/adjustment-pad')
+local lib = require('__PickerAtheneum__/utils/lib')
 
 local balancers = require('blueprints/balancers')
 

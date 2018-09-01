@@ -23,4 +23,3 @@ data:extend {
 }
 
 require('prototypes/pipehighlight')
-require('prototypes/orphans')

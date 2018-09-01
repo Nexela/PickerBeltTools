@@ -8,39 +8,6 @@
 local Event = require('__stdlib__/stdlib/event/event')
 local Position = require('__stdlib__/stdlib/area/position')
 
--- local function show_underground_sprites(event)
---     local player = game.players[event.player_index]
---     for _, entity in pairs(player.surface.find_entities_filtered {area = Position.expand_to_area(player.position, 64), type = 'pipe-to-ground'}) do
---         entity.surface.create_entity {
---             name = 'pipe-marker-box',
---             position = {entity.position.x, entity.position}
---         }
---         for _, entities in pairs(entity.neighbours) do
---             for _, neighbour in pairs(entities) do
---                 if (entity.position.x - neighbour.position.x) < -1.5 then
---                     local distancex = neighbour.position.x - entity.position.x
---                     for i = 1, distancex - 1, 1 do
---                         entity.surface.create_entity {
---                             name = 'underground-pipe-marker-horizontal',
---                             position = {entity.position.x + i, entity.position.y}
---                         }
---                     end
---                 end
---                 if (entity.position.y - neighbour.position.y) < -1.5 then
---                     local distancey = neighbour.position.y - entity.position.y
---                     for i = 1, distancey - 1, 1 do
---                         entity.surface.create_entity {
---                             name = 'underground-pipe-marker-vertical',
---                             position = {entity.position.x, entity.position.y + i}
---                         }
---                     end
---                 end
---             end
---         end
---     end
--- end
-
-
 local pipetable = {
     ["one-to-one-forward-pipe"] = 2,
     ["one-to-one-right-pipe"] = 2,
@@ -64,20 +31,21 @@ local pipetable = {
     ["one-to-four-pipe"] = 5,
     ["underground-cross-pipe"] = 4,
     }
-local function show_underground_sprites_2(event)
+local function show_underground_sprites(event)
     local player = game.players[event.player_index]
         for _, entity in pairs(player.surface.find_entities_filtered {area = Position.expand_to_area(player.position, 64), type = 'pipe-to-ground'}) do
                 local neighborCounter = 0
                 local maxNeighbors = pipetable[entity.name] or 2
                 for _, entities in pairs(entity.neighbours) do
                     for _, neighbour in pairs(entities) do
+                        local pos = Position(entity.position)
                         neighborCounter = neighborCounter + 1
                         if (entity.position.x - neighbour.position.x) < -1.5 then
                             local distancex = neighbour.position.x - entity.position.x
                             for i = 1, distancex - 1, 1 do
                                 entity.surface.create_entity {
-                                    name = 'underground-pipe-marker-horizontal',
-                                    position = {entity.position.x + i, entity.position.y}
+                                    name = 'picker-underground-marker-horizontal',
+                                    position = pos:copy():offset(i, 0)
                                 }
                             end
                         end
@@ -85,24 +53,24 @@ local function show_underground_sprites_2(event)
                             local distancey = neighbour.position.y - entity.position.y
                             for i = 1, distancey - 1, 1 do
                                 player.surface.create_entity {
-                                    name = 'underground-pipe-marker-vertical',
-                                    position = {entity.position.x, entity.position.y + i}
+                                    name = 'picker-underground-marker-vertical',
+                                    position = pos:copy():offset(0, i)
                                 }
                             end
                         end
                     end
                     if (maxNeighbors == neighborCounter) then
                         entity.surface.create_entity {
-                            name = 'pipe-marker-box-good',
-                            position = {entity.position.x, entity.position.y}
+                            name = 'picker-marker-box-green',
+                            position = entity.position
                         }
                     elseif (neighborCounter < maxNeighbors) then
                         entity.surface.create_entity {
-                            name = 'pipe-marker-box-bad',
-                            position = {entity.position.x, entity.position.y}
+                            name = 'picker-marker-box-red',
+                            position = entity.position
                         }
                     end
                 end
         end
 end
-Event.register('show-underground-sprites', show_underground_sprites_2)
+Event.register('show-underground-sprites', show_underground_sprites)

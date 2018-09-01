@@ -9,8 +9,8 @@ local Position = require('__stdlib__/stdlib/area/position')
 
 local types = {
     ['underground-belt'] = 'underground-belt',
-    ['pipe-to-ground'] = 'pipe-to-ground',
     ['transport-belt'] = 'underground-belt',
+    ['pipe-to-ground'] = 'pipe-to-ground',
     ['pipe'] = 'pipe-to-ground'
 }
 
@@ -20,11 +20,7 @@ local ugs = {
 }
 
 local function _find_mark(entity)
-    return entity.surface.find_entities_filtered {
-        name = 'picker-orphan-mark',
-        area = entity.bounding_box,
-        limit = 1
-    }[1]
+    return entity.surface.find_entity('picker-marker-box-red', entity.position)
 end
 
 local function _destroy_mark(entity)
@@ -38,18 +34,19 @@ local function find_orphans(event)
     local player, pdata = Player.get(event.player_index)
     local cursor_type = player.cursor_stack and player.cursor_stack.valid_for_read and player.cursor_stack.prototype.place_result and types[player.cursor_stack.prototype.place_result.type]
     if (player.selected and types[player.selected.type]) or cursor_type then
-        if event.tick > (pdata._next_check or 0) and player.mod_settings['picker-find-orphans'].value then
-            local etype = player.selected and types[player.selected.type] or cursor_type
+        local etype = player.selected and types[player.selected.type] or cursor_type
+        if (event.tick > (pdata['next_check_' .. etype] or 0)) and player.mod_settings['picker-find-orphans'].value then
             local ent = player.selected or player
-            local filter = {area = Position.expand_to_area(ent.position, 64), type = etype, force = player.force}
+            local filter = {area = Position(ent.position):expand_to_area(64), type = etype, force = player.force}
             for _, entity in pairs(ent.surface.find_entities_filtered(filter)) do
-                local not_con = not entity.neighbours or (entity.neighbours and not entity.neighbours.type and #entity.neighbours[1] < 1)
+                local not_con = not entity.neighbours or (entity.neighbours and not entity.neighbours.type and #entity.neighbours[1] < 2)
 
                 if not_con and not _find_mark(entity) then
-                    entity.surface.create_entity {name = 'picker-orphan-mark', position = entity.position}
+                    game.print('no marks')
+                    entity.surface.create_entity {name = 'picker-marker-box-red', position = entity.position, force = player.force}
                 end
             end
-            pdata._next_check = event.tick + (defines.time.second * 5)
+            pdata['next_check_' .. etype] = event.tick + (defines.time.second * 10)
         end
     end
 end

@@ -99,7 +99,7 @@ local function create_or_destroy_bp(player, lanes)
     if name then
         if lanes > 1 then
             if not (Inventory.is_named_bp(stack, 'Belt Brush') or Inventory.is_named_bp(stack, 'Pipette Blueprint')) and player.clean_cursor() then
-                stack = lib.get_planner(player, 'picker-dummy-blueprint', 'Belt Brush')
+                stack = lib.get_planner(player, 'picker-blueprint-tool', 'Belt Brush')
                 stack.clear_blueprint()
             end
             if Inventory.get_blueprint(player.cursor_stack, false) then
@@ -306,7 +306,7 @@ local function beltbrush_corners(event)
                 build_ptg_brush(stack, ptg, stored)
             end
         elseif stack.label:find('Belt Brush Corner Left') then
-            Event.dispatch({name = Event.generate_event_name('mirror_blueprint'), player_index = player.index, corner = true})
+            Event.raise_event(Event.get_event_name('on_blueprint_mirrored'), {player_index = player.index, corner = true})
             stack.label = 'Belt Brush Corner Right ' .. stack.label:match('%d+')
         elseif stack.label:find('Belt Brush Corner Right') then
             build_beltbrush(stack, belt.name, tonumber(stack.label:match('%d+')))
@@ -527,14 +527,14 @@ local function adjust_pad(event)
         end
     end
 end
+
 local function register()
-    local index = remote.call('PickerAtheneum', 'get_adjustment_pad_id')
-    Event.register(index, adjust_pad)
+    Event.register(Event.set_event_name('get_adjustment_pad_id', remote.call('PickerAtheneum', 'get_adjustment_pad_id')), adjust_pad)
+    if remote.interfaces['PickerBlueprinter'] then
+        Event.set_event_name('on_blueprint_mirrored', remote.call('PickerBlueprinter', 'on_blueprint_mirrored'))
+    end
 end
 Event.register({Event.core_events.init, Event.core_events.load}, register)
---Event.register(Event.core_events.load, register)
-
-
 
 Gui.on_text_changed(
     'beltbrush_text_box',

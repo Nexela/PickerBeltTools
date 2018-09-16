@@ -42,7 +42,7 @@ local function find_orphans(event)
                 local not_con = not entity.neighbours or (entity.neighbours and not entity.neighbours.type and #entity.neighbours[1] < 2)
 
                 if not_con and not _find_mark(entity) then
-                    game.print('no marks')
+                    --game.print('no marks')
                     entity.surface.create_entity {name = 'picker-marker-box-red', position = entity.position, force = player.force}
                 end
             end

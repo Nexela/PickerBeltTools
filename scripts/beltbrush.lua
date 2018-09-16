@@ -88,7 +88,7 @@ local function build_beltbrush(stack, name, lanes)
         table.each(
             entities,
             function(ent)
-                ent.position = Position.translate(ent.position, defines.direction.west, math.ceil((lanes * width) / 2))
+                ent.position = Position(ent.position):translate(defines.direction.west, math.ceil((lanes * width) / 2))
             end
         )
         stack.set_blueprint_entities(entities)
@@ -161,7 +161,7 @@ local function build_corner_brush(stack, belt, lanes)
         table.each(
             new_ents,
             function(ent)
-                ent.position = Position.translate(ent.position, defines.direction.northwest, math.ceil(lanes / 2))
+                ent.position = Position(ent.position):translate(defines.direction.northwest, math.ceil(lanes / 2))
             end
         )
         stack.set_blueprint_entities(new_ents)
@@ -210,8 +210,8 @@ local function build_ug_brush(stack, ug, lanes)
             table.each(
                 new_ents,
                 function(ent)
-                    ent.position = Position.translate(ent.position, defines.direction.west, math.ceil(lanes / 2))
-                    ent.position = Position.translate(ent.position, defines.direction.south, math.ceil(max / 2))
+                    ent.position = Position(ent.position):translate(defines.direction.west, math.ceil(lanes / 2))
+                    ent.position = Position(ent.position):translate(defines.direction.south, math.ceil(max / 2))
                 end
             )
             stack.set_blueprint_entities(new_ents)
@@ -252,8 +252,8 @@ local function build_ptg_brush(stack, ptg, lanes)
         table.each(
             new_ents,
             function(ent)
-                ent.position = Position.translate(ent.position, defines.direction.west, math.ceil(lanes / 2))
-                ent.position = Position.translate(ent.position, defines.direction.north, math.ceil(max / 2))
+                ent.position = Position(ent.position):translate(defines.direction.west, math.ceil(lanes / 2))
+                ent.position = Position(ent.position):translate(defines.direction.north, math.ceil(max / 2))
             end
         )
         stack.set_blueprint_entities(new_ents)
@@ -357,13 +357,8 @@ local function build_cascading_underground(stack, ug, lanes)
             table.each(
                 casc,
                 function(ent)
-                    ent.position = Position.translate(ent.position, defines.direction.west, math.ceil(lanes / 2))
-                end
-            )
-            table.each(
-                casc,
-                function(ent)
-                    ent.position = Position.translate(ent.position, defines.direction.north, math.ceil(max / 2))
+                    ent.position = Position(ent.position):translate(defines.direction.west, math.ceil(lanes / 2))
+                    ent.position = Position(ent.position):translate(defines.direction.north, math.ceil(max / 2))
                 end
             )
             stack.set_blueprint_entities(casc)
@@ -464,11 +459,11 @@ local function placed_blueprint(event)
         )
 
         --For all ghosts in the bounding box destroy them if they match revivables.
-        local position = {math.floor(event.position.x) + .5, math.floor(event.position.y) + .5}
+        local position = Position({math.floor(event.position.x) + .5, math.floor(event.position.y) + .5})
         table.each(
             player.surface.find_entities_filtered {
                 name = 'entity-ghost',
-                area = Area.offset({{corners.lx, corners.ly}, {corners.rx, corners.ry}}, position)
+                area = Area({{corners.lx, corners.ly}, {corners.rx, corners.ry}}):offset(position)
             },
             function(v)
                 if match_to_revive[v.ghost_type] then

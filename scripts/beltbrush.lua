@@ -13,25 +13,28 @@ local lib = require('__PickerAtheneum__/utils/lib')
 
 local balancers = require('blueprints/balancers')
 
---These items can be used to make brush widths
+--These item types can be used to make brush widths
 local match_to_brush = {
     ['transport-belt'] = true,
     ['underground-belt'] = true,
     ['loader'] = true,
-    ['pipe-to-ground'] = true
+    ['pipe-to-ground'] = true,
+    ['wall'] = true,
+    ['heat-pipe'] = true,
 }
 
---These items will be automatically revived in belt brush BPs
+--These items types will be automatically revived in belt brush BPs
 local match_to_revive = {
     ['transport-belt'] = true,
     ['underground-belt'] = true,
     ['splitter'] = true,
     ['loader'] = true,
-    ['pipe-to-ground'] = true
+    ['pipe-to-ground'] = true,
+    ['wall'] = true,
+    ['heat-pipe'] = true
 }
 
 local function get_match(stack)
-    --return stack.valid_for_read and stack.prototype.place_result and match_to_brush[stack.prototype.place_result.type or 'nil']
     if stack.valid_for_read then
         if stack.prototype.place_result and match_to_brush[stack.prototype.place_result.type or 'nil'] then
             return stack.prototype.place_result.name
@@ -71,11 +74,13 @@ Event.register(defines.events.on_built_entity, revive_belts)
 local function build_beltbrush(stack, name, lanes)
     if name then
         local entities = {}
+        local _, width = Area(game.entity_prototypes[name].collision_box):size()
+        width = math.ceil(width)
         for i = 1, lanes do
             entities[#entities + 1] = {
                 entity_number = i,
                 name = name,
-                position = {0 + i - 1, 0},
+                position = {-0.5 + (i*width), -0.5},
                 direction = defines.direction.north
             }
         end
@@ -83,7 +88,7 @@ local function build_beltbrush(stack, name, lanes)
         table.each(
             entities,
             function(ent)
-                ent.position = Position.translate(ent.position, defines.direction.west, math.ceil(lanes / 2) - 1)
+                ent.position = Position.translate(ent.position, defines.direction.west, math.ceil((lanes * width) / 2))
             end
         )
         stack.set_blueprint_entities(entities)
@@ -206,11 +211,6 @@ local function build_ug_brush(stack, ug, lanes)
                 new_ents,
                 function(ent)
                     ent.position = Position.translate(ent.position, defines.direction.west, math.ceil(lanes / 2))
-                end
-            )
-            table.each(
-                new_ents,
-                function(ent)
                     ent.position = Position.translate(ent.position, defines.direction.south, math.ceil(max / 2))
                 end
             )
@@ -225,7 +225,7 @@ end
 local function build_ptg_brush(stack, ptg, lanes)
     if lanes >= 1 and lanes <= 32 then
         local name = ptg.name
-        local direction = ptg.direction
+        local direction = ptg.direction or 0
         local new_ents = {}
         local max = game.entity_prototypes[name].max_underground_distance
         local next_id = 0
@@ -253,11 +253,6 @@ local function build_ptg_brush(stack, ptg, lanes)
             new_ents,
             function(ent)
                 ent.position = Position.translate(ent.position, defines.direction.west, math.ceil(lanes / 2))
-            end
-        )
-        table.each(
-            new_ents,
-            function(ent)
                 ent.position = Position.translate(ent.position, defines.direction.north, math.ceil(max / 2))
             end
         )

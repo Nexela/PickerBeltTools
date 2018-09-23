@@ -14,12 +14,5 @@ data:extend {
         name = 'picker-reverse-belts',
         key_sequence = 'ALT + R'
     },
-    {
-        type = 'custom-input',
-        name = 'show-underground-sprites',
-        key_sequence = 'CONTROL + SHIFT + P',
-        consuming = 'script-only'
-    }
-}
 
-require('prototypes/pipehighlight')
+}

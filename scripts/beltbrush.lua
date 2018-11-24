@@ -22,7 +22,7 @@ local match_to_brush = {
     ['wall'] = true,
     ['heat-pipe'] = true,
     ['rail'] = true,
-    ['straight-rail'] = true,
+    ['straight-rail'] = true
 }
 
 --These items types will be automatically revived in belt brush BPs
@@ -41,14 +41,17 @@ local function get_match(stack)
         if stack.prototype.place_result and match_to_brush[stack.prototype.place_result.type or 'nil'] then
             return stack.prototype.place_result.name
         elseif stack.is_blueprint and stack.is_blueprint_setup() then
-            local ent =
-                table.find(
-                stack.get_blueprint_entities(),
-                function(v)
-                    return match_to_brush[game.entity_prototypes[v.name].type]
-                end
-            )
-            return ent and ent.name
+            local ents = stack.get_blueprint_entities()
+            if ents then
+                local ent =
+                    table.find(
+                    ents,
+                    function(v)
+                        return match_to_brush[game.entity_prototypes[v.name].type]
+                    end
+                )
+                return ent and ent.name
+            end
         end
     end
 end
@@ -82,7 +85,7 @@ local function build_beltbrush(stack, name, lanes)
             entities[#entities + 1] = {
                 entity_number = i,
                 name = name,
-                position = {-0.5 + (i*width), -0.5},
+                position = {-0.5 + (i * width), -0.5},
                 direction = defines.direction.north
             }
         end

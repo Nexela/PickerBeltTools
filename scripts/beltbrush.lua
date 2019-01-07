@@ -6,6 +6,7 @@ local Gui = require('__stdlib__/stdlib/event/gui')
 local Player = require('__stdlib__/stdlib/event/player')
 local Position = require('__stdlib__/stdlib/area/position')
 local Area = require('__stdlib__/stdlib/area/area')
+local Direction = require('__stdlib__/stdlib/area/direction')
 local Inventory = require('__stdlib__/stdlib/entity/inventory')
 local table = require('__stdlib__/stdlib/utils/table')
 local Pad = require('__PickerAtheneum__/utils/adjustment-pad')
@@ -249,7 +250,7 @@ local function build_ptg_brush(stack, ptg, lanes)
             new_ents[#new_ents + 1] = {
                 entity_number = get_next_id(),
                 name = name,
-                direction = Position.opposite_direction(direction),
+                direction = Direction.opposite_direction(direction),
                 position = {x, (0.5 + max)}
             }
         end

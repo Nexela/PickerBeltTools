@@ -6,7 +6,8 @@
 --]]
 local Event = require('__stdlib__/stdlib/event/event')
 local Position = require('__stdlib__/stdlib/area/position')
-local op_dir = Position.opposite_direction
+local Direction = require('__stdlib__/stdlib/area/direction')
+local op_dir = Direction.opposite_direction
 
 local belt_types = {
     ['transport-belt'] = true,

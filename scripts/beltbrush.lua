@@ -117,15 +117,13 @@ local function create_or_destroy_bp(player, lanes)
                 build_beltbrush(stack, name, lanes)
             end
         elseif Inventory.is_named_bp(stack, 'Belt Brush') and lanes == 1 then
-            for _, inv in pairs(Inventory.get_main_inventories(player)) do
-                local item = inv.find_item_stack(name)
-                if item then
-                    stack.set_stack(item) -- set the cursor stack to the item
-                    item.clear() -- clear the item from the inventory
-                    break
-                else
-                    stack.clear() -- no item found, just nuke the cursor stack
-                end
+            local inv = player.get_main_inventory()
+            local item = inv.find_item_stack(name)
+            if item then
+                stack.set_stack(item) -- set the cursor stack to the item
+                item.clear() -- clear the item from the inventory
+            else
+                stack.clear() -- no item found, just nuke the cursor stack
             end
         end
     end

@@ -206,8 +206,8 @@ local function get_next_upstream_transport_line(belt)
     end
 
     local linearBelt = getUpstreamBeltInDirection(belt, op_dir(belt.direction))
-    local leftTurnBelt = getUpstreamBeltInDirection(belt, Position.next_direction(belt.direction))
-    local rightTurnBelt = getUpstreamBeltInDirection(belt, Position.next_direction(belt.direction, true))
+    local leftTurnBelt = getUpstreamBeltInDirection(belt, Direction.next_direction(belt.direction))
+    local rightTurnBelt = getUpstreamBeltInDirection(belt, Direction.next_direction(belt.direction, true))
     if linearBelt then
         return linearBelt
     end

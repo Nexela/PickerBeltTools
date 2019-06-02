@@ -38,6 +38,7 @@ local base_entity = {
 }
 
 local belt_pictures = {}
+local belt_sprite_prototypes = {}
 for i = 1, 64 do
     local y = 0
     if i > 16 and i <= 32 then
@@ -59,6 +60,20 @@ for i = 1, 64 do
         --shift = {-0.5,-0.5},
         filename = '__PickerBeltTools__/graphics/entity/markers/belt-arrow-set-full.png'
     }
+    belt_sprite_prototypes[i] = {
+        type = "sprite",
+        name = "picker-belt-marker-" .. i,
+        width = 32,
+        height = 32,
+        x = ((i - 1) % 16) * 32,
+        y = y,
+        line_length = 16,
+        frame_count = 1,
+        direction_count = 1,
+        --scale = 0.5,
+        --shift = {-0.5,-0.5},
+        filename = '__PickerBeltTools__/graphics/entity/markers/belt-arrow-set-full.png'
+    }
 end
 
 local belt_marker = util.table.deepcopy(base_entity)
@@ -66,6 +81,7 @@ belt_marker.name = 'picker-belt-marker-full'
 belt_marker.pictures = belt_pictures
 
 data:extend({belt_marker})
+data:extend(belt_sprite_prototypes)
 
 local splitter_image_table = {
     {
@@ -119,6 +135,7 @@ local splitter_image_table = {
 }
 
 local splitter_markers = {}
+local splitter_sprite_prototypes = {}
 for _, image_data in pairs(splitter_image_table) do
     local splitter_pictures = {}
     --local counter = 1
@@ -150,11 +167,45 @@ for _, image_data in pairs(splitter_image_table) do
     splitter_marker.pictures = splitter_pictures
     splitter_marker.selection_box = image_data.selection_box
     splitter_markers[#splitter_markers + 1] = splitter_marker
+
+    --local splitter_sprite_prototypes = {}
+    --local counter = 1
+    --local splitter_marker = util.table.deepcopy(base_entity)
+    for i = 1, 16 do
+        local y = 0 * image_data.image_size.y
+        if i > 4 and i <= 8 then
+            y = 1 * image_data.image_size.y
+        elseif i > 8 and i <= 12 then
+            y = 2 * image_data.image_size.y
+        elseif i > 12 and i <= 16 then
+            y = 3 * image_data.image_size.y
+        end
+        splitter_sprite_prototypes[#splitter_sprite_prototypes + 1] = {
+            type = "sprite",
+            name = 'picker-' .. image_data.image .. "-" .. i,
+            width = image_data.image_size.x,
+            height = image_data.image_size.y,
+            x = ((i - 1) % 4) * image_data.image_size.x,
+            y = y,
+            line_length = 4,
+            frame_count = 1,
+            direction_count = 1,
+            --scale = 0.5,
+            --shift = {-0.5,-0.5},
+            filename = '__PickerBeltTools__/graphics/entity/markers/' .. image_data.image .. '.png'
+        }
+        --counter = counter + 1
+    end
+    --splitter_marker.pictures = splitter_pictures
+    --splitter_marker.selection_box = image_data.selection_box
+    --splitter_markers[#splitter_markers + 1] = splitter_marker
 end
 
 data:extend(splitter_markers)
+data:extend(splitter_sprite_prototypes)
 
 local ug_belt_pictures = {}
+local ug_belt_sprite_prototypes = {}
 for i = 1, 64 do
     local y = 0
     if i > 16 and i <= 32 then
@@ -191,6 +242,36 @@ for i = 1, 64 do
             }
         }
     }
+
+    ug_belt_sprite_prototypes[i] = {
+        type = "sprite",
+        name = "picker-ug-belt-marker-" .. i,
+        layers = {
+            {
+                width = 32,
+                height = 32,
+                x = ((i - 1) % 16) * 32,
+                y = y,
+                line_length = 16,
+                frame_count = 1,
+                direction_count = 1,
+                --scale = 0.5,
+                --shift = {-0.5,-0.5},
+                filename = '__PickerBeltTools__/graphics/entity/markers/belt-arrow-set-full.png'
+            },
+            {
+                width = 64,
+                height = 64,
+                x = 0,
+                line_length = 5,
+                frame_count = 1,
+                direction_count = 1,
+                scale = 0.5,
+                --shift = {-0.5,-0.5},
+                filename = '__core__/graphics/cursor-boxes-32x32.png'
+            }
+        }
+    }
 end
 
 local ug_belt_marker = util.table.deepcopy(base_entity)
@@ -198,6 +279,7 @@ ug_belt_marker.name = 'picker-ug-belt-marker-full'
 ug_belt_marker.pictures = ug_belt_pictures
 
 data:extend({ug_belt_marker})
+data:extend(ug_belt_sprite_prototypes)
 
 --[[
     local belt_marker_table = {

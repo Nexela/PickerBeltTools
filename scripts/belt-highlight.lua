@@ -131,8 +131,11 @@ local function show_underground_sprites(event)
 end
 
 local function destroy_markers(markers)
+    rendering.clear()
     for _, entity in pairs(markers or empty) do
-        entity.destroy()
+        if type(entity) ~= "number" then
+            entity.destroy()
+        end
     end
 end
 
@@ -199,6 +202,8 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     --? Cache functions used more than once
     local find_belt = player.surface.find_entities_filtered
     local create = player.surface.create_entity
+    local create_sprite = rendering.draw_sprite
+    local surface = player.surface
 
     local function read_forward_belt(forward_position)
         return find_belt(
@@ -263,7 +268,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     end
 
     --((
-    local function mark_ug_belt(unit_number, current_entity)
+    --[[local function mark_ug_belt(unit_number, current_entity)
         markers_made = markers_made + 1
         local new_marker =
             create {
@@ -273,6 +278,22 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local map_dir = current_entity[4] / 2
         local graphics_change = (16 * map_dir) + marker_entry[get_directions_ug_belt(current_entity)]
         new_marker.graphics_variation = graphics_change
+        all_markers[markers_made] = new_marker
+        all_entities_marked[unit_number] = true
+    end]]--
+
+    local function mark_ug_belt(unit_number, current_entity)
+        markers_made = markers_made + 1
+        local map_dir = current_entity[4] / 2
+        local graphics_change = (16 * map_dir) + marker_entry[get_directions_ug_belt(current_entity)]
+        --new_marker.graphics_variation = graphics_change
+        local new_marker =
+        create_sprite {
+            sprite = 'picker-ug-belt-marker-' .. graphics_change,
+            target = current_entity[1],
+            surface = surface,
+            only_in_alt_mode = true
+        }
         all_markers[markers_made] = new_marker
         all_entities_marked[unit_number] = true
     end

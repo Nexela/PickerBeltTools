@@ -10,7 +10,7 @@ local Position = require('__stdlib__/stdlib/area/position')
 local Direction = require('__stdlib__/stdlib/area/direction')
 
 local op_dir = Direction.opposite_direction
-local max_belts = 100
+local max_belts = 200
 local empty = {}
 
 local map_direction = {
@@ -176,6 +176,33 @@ local splitter_check_table = {
     }
 }
 
+local ug_marker_table = {
+    [defines.direction.north] = {
+        left = Position({x = -0.4, y = -0.25}),
+        right = Position({x = 0.4, y = -0.25}),
+        rev_left = Position({x = -0.4, y = 0}),
+        rev_right = Position({x = 0.4, y = 0}),
+    },
+    [defines.direction.east] = {
+        left = Position({x = 0.25, y = -0.4}),
+        right = Position({x = 0.25, y = 0.4}),
+        rev_left = Position({x = -0, y = -0.4}),
+        rev_right = Position({x = -0, y = 0.4}),
+    },
+    [defines.direction.south] = {
+        left = Position({x = 0.4, y = 0.25}),
+        right = Position({x = -0.4, y = 0.25}),
+        rev_left = Position({x = 0.4, y = -0}),
+        rev_right = Position({x = -0.4, y = -0}),
+    },
+    [defines.direction.west] = {
+        left = Position({x = -0.25, y = 0.4}),
+        right = Position({x = -0.25, y = -0.4}),
+        rev_left = Position({x = 0, y = 0.4}),
+        rev_right = Position({x = 0, y = -0.4}),
+    }
+}
+
 local bor = bit32.bor
 local lshift = bit32.lshift
 local function highlight_belts(selected_entity, player_index, forward, backward, stitch_data)
@@ -201,8 +228,9 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
 
     --? Cache functions used more than once
     local find_belt = player.surface.find_entities_filtered
-    local create = player.surface.create_entity
+    --local create = player.surface.create_entity
     local create_sprite = rendering.draw_sprite
+    local create_line = rendering.draw_line
     local surface = player.surface
 
     local function read_forward_belt(forward_position)
@@ -267,28 +295,11 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         return table_entry
     end
 
-    --((
-    --[[local function mark_ug_belt(unit_number, current_entity)
-        markers_made = markers_made + 1
-        local new_marker =
-            create {
-            name = 'picker-ug-belt-marker-full',
-            position = current_entity[1]
-        }
-        local map_dir = current_entity[4] / 2
-        local graphics_change = (16 * map_dir) + marker_entry[get_directions_ug_belt(current_entity)]
-        new_marker.graphics_variation = graphics_change
-        all_markers[markers_made] = new_marker
-        all_entities_marked[unit_number] = true
-    end]]--
-
     local function mark_ug_belt(unit_number, current_entity)
         markers_made = markers_made + 1
         local map_dir = current_entity[4] / 2
         local graphics_change = (16 * map_dir) + marker_entry[get_directions_ug_belt(current_entity)]
-        --new_marker.graphics_variation = graphics_change
-        local new_marker =
-        create_sprite {
+        local new_marker = create_sprite {
             sprite = 'picker-ug-belt-marker-' .. graphics_change,
             target = current_entity[1],
             surface = surface,
@@ -313,14 +324,14 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
 
     local function mark_belt(unit_number, current_entity)
         markers_made = markers_made + 1
-        local new_marker =
-            create {
-            name = 'picker-belt-marker-full',
-            position = current_entity[1]
-        }
         local map_dir = current_entity[4] / 2
         local graphics_change = (16 * map_dir) + bitwise_marker_entry[get_directions_belt(current_entity)]
-        new_marker.graphics_variation = graphics_change
+        local new_marker = create_sprite {
+            sprite = 'picker-belt-marker-' .. graphics_change,
+            target = current_entity[1],
+            surface = surface,
+            only_in_alt_mode = true
+        }
         all_markers[markers_made] = new_marker
         all_entities_marked[unit_number] = true
     end
@@ -337,27 +348,17 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
 
     local function mark_splitter(unit_number, current_entity)
         markers_made = markers_made + 1
-        local new_marker =
-            create {
-            name = map_direction[current_entity[4]],
-            position = current_entity[1]
-        }
         local graphics_change = bitwise_marker_entry[get_directions_splitter(current_entity)]
-        new_marker.graphics_variation = graphics_change
+        local new_marker = create_sprite {
+            sprite = map_direction[current_entity[4]] .. "-" .. graphics_change,
+            target = current_entity[1],
+            surface = surface,
+            only_in_alt_mode = true
+        }
         all_markers[markers_made] = new_marker
         all_entities_marked[unit_number] = true
     end
 
-    --[[
-        local function mark_scheduled_point(_, current_entity)
-        markers_made = markers_made + 1
-        all_markers[markers_made] =
-            create {
-            name = 'picker-pipe-marker-box-bad',
-            position = current_entity[1]
-        }
-    end
-    --]]
     local function cache_forward_entity(entity, entity_unit_number, entity_position, entity_type, entity_direction, belt_to_ground_direction, previous_entity_unit_number, previous_entity_direction, previous_entity_input_side)
         local entity_neighbours = {}
         if previous_entity_input_side then
@@ -1080,6 +1081,34 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     end
     read_belts(selected_entity)
 
+    local function mark_ug_segment(start_position, end_position, entity_direction)
+        local ug_marker = ug_marker_table[entity_direction]
+        markers_made = markers_made + 1
+        all_markers[markers_made] =
+        create_line{
+            color = {r = 1, g = 1, b = 0, a = 1},
+            width = 3,
+            gap_length = 0.5,
+            dash_length = 0.5,
+            from = start_position + ug_marker.left,
+            to = end_position + ug_marker.rev_left,
+            surface = surface,
+            only_in_alt_mode = true
+        }
+        markers_made = markers_made + 1
+        all_markers[markers_made] =
+        create_line{
+            color = {r = 1, g = 1, b = 0, a = 1},
+            width = 3,
+            gap_length = 0.5,
+            dash_length = 0.5,
+            from = start_position + ug_marker.right,
+            to = end_position + ug_marker.rev_right,
+            surface = surface,
+            only_in_alt_mode = true
+        }
+    end
+
     for unit_number, current_entity in pairs(read_entity_data) do
         if not all_entities_marked[unit_number] then
             if current_entity[3] == 'underground-belt' and current_entity[6] == 'input' and current_entity[2].ug_output_target then
@@ -1087,7 +1116,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 local neighbour_entity_data = read_entity_data[current_entity[2].ug_output_target]
                 local end_position = Position(neighbour_entity_data[1]):translate(op_dir(current_entity[4]), 0.5)
                 mark_ug_belt(unit_number, current_entity)
-                markers_made = markers_made + 1
+                --[[markers_made = markers_made + 1
                 all_markers[markers_made] =
                     create {
                     name = 'picker-underground-belt-marker-beam',
@@ -1095,7 +1124,8 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     source_position = start_position,
                     target_position = end_position,
                     duration = 2000000000
-                }
+                }]]--
+                mark_ug_segment(start_position, end_position, current_entity[4])
                 all_entities_marked[unit_number] = true
             elseif current_entity[3] == 'transport-belt' then
                 mark_belt(unit_number, current_entity)

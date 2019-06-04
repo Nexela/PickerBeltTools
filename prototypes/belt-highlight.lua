@@ -80,7 +80,7 @@ local belt_marker = util.table.deepcopy(base_entity)
 belt_marker.name = 'picker-belt-marker-full'
 belt_marker.pictures = belt_pictures
 
-data:extend({belt_marker})
+--data:extend({belt_marker})
 data:extend(belt_sprite_prototypes)
 
 local splitter_image_table = {
@@ -201,7 +201,7 @@ for _, image_data in pairs(splitter_image_table) do
     --splitter_markers[#splitter_markers + 1] = splitter_marker
 end
 
-data:extend(splitter_markers)
+--data:extend(splitter_markers)
 data:extend(splitter_sprite_prototypes)
 
 local ug_belt_pictures = {}
@@ -278,7 +278,7 @@ local ug_belt_marker = util.table.deepcopy(base_entity)
 ug_belt_marker.name = 'picker-ug-belt-marker-full'
 ug_belt_marker.pictures = ug_belt_pictures
 
-data:extend({ug_belt_marker})
+--data:extend({ug_belt_marker})
 data:extend(ug_belt_sprite_prototypes)
 
 --[[

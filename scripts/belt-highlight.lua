@@ -299,14 +299,46 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         markers_made = markers_made + 1
         local map_dir = current_entity[4] / 2
         local graphics_change = (16 * map_dir) + marker_entry[get_directions_ug_belt(current_entity)]
+        game.print(player_index)
         local new_marker = create_sprite {
             sprite = 'picker-ug-belt-marker-' .. graphics_change,
             target = current_entity[1],
             surface = surface,
-            only_in_alt_mode = true
+            only_in_alt_mode = true,
+            players = {player_index}
         }
         all_markers[markers_made] = new_marker
         all_entities_marked[unit_number] = true
+    end
+
+    local function mark_ug_segment(start_position, end_position, entity_direction)
+        local ug_marker = ug_marker_table[entity_direction]
+        markers_made = markers_made + 1
+        all_markers[markers_made] =
+        create_line{
+            color = {r = 1, g = 1, b = 0, a = 1},
+            width = 3,
+            gap_length = 0.5,
+            dash_length = 0.5,
+            from = start_position + ug_marker.left,
+            to = end_position + ug_marker.rev_left,
+            surface = surface,
+            only_in_alt_mode = true,
+            players = {player_index}
+        }
+        markers_made = markers_made + 1
+        all_markers[markers_made] =
+        create_line{
+            color = {r = 1, g = 1, b = 0, a = 1},
+            width = 3,
+            gap_length = 0.5,
+            dash_length = 0.5,
+            from = start_position + ug_marker.right,
+            to = end_position + ug_marker.rev_right,
+            surface = surface,
+            only_in_alt_mode = true,
+            players = {player_index}
+        }
     end
     --))
 
@@ -330,7 +362,8 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             sprite = 'picker-belt-marker-' .. graphics_change,
             target = current_entity[1],
             surface = surface,
-            only_in_alt_mode = true
+            only_in_alt_mode = true,
+            players = {player_index}
         }
         all_markers[markers_made] = new_marker
         all_entities_marked[unit_number] = true
@@ -353,7 +386,8 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             sprite = map_direction[current_entity[4]] .. "-" .. graphics_change,
             target = current_entity[1],
             surface = surface,
-            only_in_alt_mode = true
+            only_in_alt_mode = true,
+            players = {player_index}
         }
         all_markers[markers_made] = new_marker
         all_entities_marked[unit_number] = true
@@ -1080,34 +1114,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         end
     end
     read_belts(selected_entity)
-
-    local function mark_ug_segment(start_position, end_position, entity_direction)
-        local ug_marker = ug_marker_table[entity_direction]
-        markers_made = markers_made + 1
-        all_markers[markers_made] =
-        create_line{
-            color = {r = 1, g = 1, b = 0, a = 1},
-            width = 3,
-            gap_length = 0.5,
-            dash_length = 0.5,
-            from = start_position + ug_marker.left,
-            to = end_position + ug_marker.rev_left,
-            surface = surface,
-            only_in_alt_mode = true
-        }
-        markers_made = markers_made + 1
-        all_markers[markers_made] =
-        create_line{
-            color = {r = 1, g = 1, b = 0, a = 1},
-            width = 3,
-            gap_length = 0.5,
-            dash_length = 0.5,
-            from = start_position + ug_marker.right,
-            to = end_position + ug_marker.rev_right,
-            surface = surface,
-            only_in_alt_mode = true
-        }
-    end
 
     for unit_number, current_entity in pairs(read_entity_data) do
         if not all_entities_marked[unit_number] then

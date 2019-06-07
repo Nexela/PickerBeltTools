@@ -9,7 +9,13 @@ local Player = require('__stdlib__/stdlib/event/player')
 local Position = require('__stdlib__/stdlib/area/position')
 local Direction = require('__stdlib__/stdlib/area/direction')
 
-Event.validate_objects = false
+local profiler
+local options = {
+    protected_mode = false,
+    skip_valid = true,
+
+}
+
 local op_dir = Direction.opposite_direction
 local max_belts = 500
 local empty = {}
@@ -215,7 +221,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     local all_entities_marked = pdata.current_beltnet_table and pdata.current_beltnet_table or {}
     local all_markers = pdata.current_marker_table and pdata.current_marker_table or {}
 
-    local belts_read = global.belts_marked_this_tick > 0 and global.belts_marked_this_tick or 0
+    local belts_read = (global.belts_marked_this_tick or 0) > 0 and global.belts_marked_this_tick or 0
     --local belts_read = 0
     local markers_made = next(all_markers) and #all_markers or 0
 
@@ -1148,7 +1154,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             end
         end
     end
-    global.belts_marked_this_tick = global.belts_marked_this_tick + belts_read
+    global.belts_marked_this_tick = (global.belts_marked_this_tick or 0) + belts_read
     global.total_belts_marked = global.total_belts_marked + belts_read
 end
 
@@ -1175,12 +1181,12 @@ local function get_beltline(event)
                     pdata.current_marker_table = nil
                     pdata.scheduled_markers = nil
                 end
-                p = game.create_profiler()
+                profiler = game.create_profiler()
                 log("Started marking")
                 global.total_belts_marked = 0
                 global.start_tick = game.tick
                 highlight_belts(selection, event.player_index, true, true)
-                p.stop()
+                profiler.stop()
             end
         else
             if next(pdata.current_beltnet_table) then
@@ -1195,7 +1201,7 @@ local function get_beltline(event)
     end
     --Profiler.Stop(nil)
 end
-Event.register(defines.events.on_selected_entity_changed, get_beltline)
+Event.register(defines.events.on_selected_entity_changed, get_beltline, nil, nil, options)
 
 local function highlight_scheduler()
     for player_index, _ in pairs(global.marking_players) do
@@ -1228,11 +1234,12 @@ end
 
 local function max_belts_handler()
     if global.marking then
-        p.restart()
+        profiler.restart()
         global.belts_marked_this_tick = 0
         highlight_scheduler()
-        p.stop()
+        profiler.stop()
     end
+    profiler = nil
 end
 
-Event.register(defines.events.on_tick, max_belts_handler)
+Event.register(defines.events.on_tick, max_belts_handler, nil, nil, options)

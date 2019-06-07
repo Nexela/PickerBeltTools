@@ -9,8 +9,9 @@ local Player = require('__stdlib__/stdlib/event/player')
 local Position = require('__stdlib__/stdlib/area/position')
 local Direction = require('__stdlib__/stdlib/area/direction')
 
+Event.validate_objects = false
 local op_dir = Direction.opposite_direction
-local max_belts = 200
+local max_belts = 500
 local empty = {}
 
 local map_direction = {
@@ -131,11 +132,13 @@ local function show_underground_sprites(event)
 end
 
 local function destroy_markers(markers)
-    rendering.clear()
-    for _, entity in pairs(markers or empty) do
-        if type(entity) ~= "number" then
-            entity.destroy()
-        end
+    local destroy = rendering.destroy
+    --rendering.clear()
+    for _, mark in pairs(markers or empty) do
+        destroy(mark)
+        --if type(entity) ~= "number" then
+        --    entity.destroy()
+        --end
     end
 end
 
@@ -212,7 +215,8 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     local all_entities_marked = pdata.current_beltnet_table and pdata.current_beltnet_table or {}
     local all_markers = pdata.current_marker_table and pdata.current_marker_table or {}
 
-    local belts_read = 0
+    local belts_read = global.belts_marked_this_tick > 0 and global.belts_marked_this_tick or 0
+    --local belts_read = 0
     local markers_made = next(all_markers) and #all_markers or 0
 
     --? Assign working table references to global reference under player
@@ -409,6 +413,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             entity,
             belt_to_ground_direction
         }
+        belts_read = belts_read + 1
     end
 
     local function read_belts(starter_entity)
@@ -877,6 +882,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     belt_to_ground_direction
                 }
             read_entity_data[entity_unit_number] = current_entity
+            belts_read = belts_read + 1
         end
 
         local function step_backward(entity, entity_unit_number, entity_position, entity_type, entity_direction, belt_to_ground_direction, previous_entity_unit_number, previous_entity_output_side)
@@ -1142,10 +1148,12 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             end
         end
     end
-    global.belts_marked_this_tick = global.belts_marked_this_tick and (global.belts_marked_this_tick + belts_read) or belts_read
+    global.belts_marked_this_tick = global.belts_marked_this_tick + belts_read
+    global.total_belts_marked = global.total_belts_marked + belts_read
 end
 
 local function get_beltline(event)
+    --Profiler.Start()
     local player, pdata = Player.get(event.player_index)
     pdata.current_beltnet_table = pdata.current_beltnet_table or {}
     pdata.current_marker_table = pdata.current_marker_table or {}
@@ -1167,7 +1175,12 @@ local function get_beltline(event)
                     pdata.current_marker_table = nil
                     pdata.scheduled_markers = nil
                 end
+                p = game.create_profiler()
+                log("Started marking")
+                global.total_belts_marked = 0
+                global.start_tick = game.tick
                 highlight_belts(selection, event.player_index, true, true)
+                p.stop()
             end
         else
             if next(pdata.current_beltnet_table) then
@@ -1180,6 +1193,7 @@ local function get_beltline(event)
             end
         end
     end
+    --Profiler.Stop(nil)
 end
 Event.register(defines.events.on_selected_entity_changed, get_beltline)
 
@@ -1192,7 +1206,7 @@ local function highlight_scheduler()
             if next_belt[1].valid then
                 highlight_belts(next_belt[1], player_index, next_belt[2] == 'forward' and true or false, next_belt[2] == 'backward' and true or false, next_belt[3])
             end
-            break
+            --break
         elseif pdata.scheduled_markers and not next(pdata.scheduled_markers[1]) and pdata.scheduled_markers[2] and next(pdata.scheduled_markers[2]) then
             table.remove(pdata.scheduled_markers, 1)
         else
@@ -1202,6 +1216,10 @@ local function highlight_scheduler()
     end
     if not next(global.marking_players) then
         global.marking = false
+        log(p)
+        log("Ended marking")
+        log(global.total_belts_marked .. " total belts marked")
+        log(game.tick - global.start_tick .. " ticks required to complete")
     end
     if global.marking and global.belts_marked_this_tick < max_belts then
         return highlight_scheduler()
@@ -1210,8 +1228,10 @@ end
 
 local function max_belts_handler()
     if global.marking then
+        p.restart()
         global.belts_marked_this_tick = 0
         highlight_scheduler()
+        p.stop()
     end
 end
 

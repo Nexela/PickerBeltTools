@@ -1247,8 +1247,17 @@ local function on_player_toggled_alt_mode(event)
     local player = game.get_player(event.player_index)
     if not player.game_view_settings.show_entity_info then
         log('Toggled game_view_settings.show_entity_info')
-        -- cleanup renderings
-        -- make ticker stop
+    -- cleanup renderings
+    -- make ticker stop
     end
 end
 Event.register(defines.events.on_player_toggled_alt_mode, on_player_toggled_alt_mode)
+
+-- Just toggle it on right away!
+local function on_player_created(event)
+    local player = game.get_player(event.player_index)
+    if player.is_shortcut_available('picker-belt-highlighter') then
+        player.set_shortcut_toggled('picker-belt-highlighter', true)
+    end
+end
+Event.register(defines.events.on_player_created, on_player_created)

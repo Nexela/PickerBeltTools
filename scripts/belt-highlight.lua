@@ -12,8 +12,7 @@ local Direction = require('__stdlib__/stdlib/area/direction')
 local profiler
 local options = {
     protected_mode = false,
-    skip_valid = true,
-
+    skip_valid = true
 }
 
 local op_dir = Direction.opposite_direction
@@ -190,25 +189,25 @@ local ug_marker_table = {
         left = Position({x = -0.4, y = -0.25}),
         right = Position({x = 0.4, y = -0.25}),
         rev_left = Position({x = -0.4, y = 0}),
-        rev_right = Position({x = 0.4, y = 0}),
+        rev_right = Position({x = 0.4, y = 0})
     },
     [defines.direction.east] = {
         left = Position({x = 0.25, y = -0.4}),
         right = Position({x = 0.25, y = 0.4}),
         rev_left = Position({x = -0, y = -0.4}),
-        rev_right = Position({x = -0, y = 0.4}),
+        rev_right = Position({x = -0, y = 0.4})
     },
     [defines.direction.south] = {
         left = Position({x = 0.4, y = 0.25}),
         right = Position({x = -0.4, y = 0.25}),
         rev_left = Position({x = 0.4, y = -0}),
-        rev_right = Position({x = -0.4, y = -0}),
+        rev_right = Position({x = -0.4, y = -0})
     },
     [defines.direction.west] = {
         left = Position({x = -0.25, y = 0.4}),
         right = Position({x = -0.25, y = -0.4}),
         rev_left = Position({x = 0, y = 0.4}),
-        rev_right = Position({x = 0, y = -0.4}),
+        rev_right = Position({x = 0, y = -0.4})
     }
 }
 
@@ -238,7 +237,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
 
     --? Cache functions used more than once
     local find_belt = player.surface.find_entities_filtered
-    --local create = player.surface.create_entity
     local create_sprite = rendering.draw_sprite
     local create_line = rendering.draw_line
     local surface = player.surface
@@ -310,7 +308,8 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local map_dir = current_entity[4] / 2
         local graphics_change = (16 * map_dir) + marker_entry[get_directions_ug_belt(current_entity)]
         game.print(player_index)
-        local new_marker = create_sprite {
+        local new_marker =
+            create_sprite {
             sprite = 'picker-ug-belt-marker-' .. graphics_change,
             target = current_entity[1],
             surface = surface,
@@ -325,7 +324,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local ug_marker = ug_marker_table[entity_direction]
         markers_made = markers_made + 1
         all_markers[markers_made] =
-        create_line{
+            create_line {
             color = {r = 1, g = 1, b = 0, a = 1},
             width = 3,
             gap_length = 0.5,
@@ -338,7 +337,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         }
         markers_made = markers_made + 1
         all_markers[markers_made] =
-        create_line{
+            create_line {
             color = {r = 1, g = 1, b = 0, a = 1},
             width = 3,
             gap_length = 0.5,
@@ -368,7 +367,8 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         markers_made = markers_made + 1
         local map_dir = current_entity[4] / 2
         local graphics_change = (16 * map_dir) + bitwise_marker_entry[get_directions_belt(current_entity)]
-        local new_marker = create_sprite {
+        local new_marker =
+            create_sprite {
             sprite = 'picker-belt-marker-' .. graphics_change,
             target = current_entity[1],
             surface = surface,
@@ -392,8 +392,9 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     local function mark_splitter(unit_number, current_entity)
         markers_made = markers_made + 1
         local graphics_change = bitwise_marker_entry[get_directions_splitter(current_entity)]
-        local new_marker = create_sprite {
-            sprite = map_direction[current_entity[4]] .. "-" .. graphics_change,
+        local new_marker =
+            create_sprite {
+            sprite = map_direction[current_entity[4]] .. '-' .. graphics_change,
             target = current_entity[1],
             surface = surface,
             only_in_alt_mode = true,
@@ -1134,15 +1135,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 local neighbour_entity_data = read_entity_data[current_entity[2].ug_output_target]
                 local end_position = Position(neighbour_entity_data[1]):translate(op_dir(current_entity[4]), 0.5)
                 mark_ug_belt(unit_number, current_entity)
-                --[[markers_made = markers_made + 1
-                all_markers[markers_made] =
-                    create {
-                    name = 'picker-underground-belt-marker-beam',
-                    position = current_entity[1],
-                    source_position = start_position,
-                    target_position = end_position,
-                    duration = 2000000000
-                }]]--
                 mark_ug_segment(start_position, end_position, current_entity[4])
                 all_entities_marked[unit_number] = true
             elseif current_entity[3] == 'transport-belt' then
@@ -1159,47 +1151,45 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
 end
 
 local function get_beltline(event)
-    --Profiler.Start()
     local player, pdata = Player.get(event.player_index)
-    pdata.current_beltnet_table = pdata.current_beltnet_table or {}
-    pdata.current_marker_table = pdata.current_marker_table or {}
-    pdata.scheduled_markers = pdata.scheduled_markers or {}
-    if not next(pdata.scheduled_markers) then
-        pdata.scheduled_markers[1] = {}
-    end
-    global.marking_players = global.marking_players or {}
-    if not pdata.disable_auto_highlight then
-        local selection = player.selected
-        -- TODO Faster check if table method possibly
-        if selection and allowed_types[selection.type] then
-            if not pdata.current_beltnet_table[selection.unit_number] then
+    if player.is_shortcut_toggled('picker-belt-highlighter') and player.game_view_settings.show_entity_info then
+        --Profiler.Stop(nil)
+        --Profiler.Start()
+        pdata.current_beltnet_table = pdata.current_beltnet_table or {}
+        pdata.current_marker_table = pdata.current_marker_table or {}
+        pdata.scheduled_markers = pdata.scheduled_markers or {}
+        if not next(pdata.scheduled_markers) then
+            pdata.scheduled_markers[1] = {}
+        end
+        global.marking_players = global.marking_players or {}
+        if not pdata.disable_auto_highlight then
+            local selection = player.selected
+            -- TODO Faster check if table method possibly
+            if selection and allowed_types[selection.type] then
+                if not pdata.current_beltnet_table[selection.unit_number] then
+                    if next(pdata.current_beltnet_table) then
+                        destroy_markers(pdata.current_marker_table)
+                        pdata.current_beltnet_table = nil
+                        pdata.current_marker_table = nil
+                        pdata.scheduled_markers = nil
+                    end
+                    profiler = game.create_profiler()
+                    log('Started marking')
+                    global.total_belts_marked = 0
+                    global.start_tick = game.tick
+                    highlight_belts(selection, event.player_index, true, true)
+                    profiler.stop()
+                end
+            else
                 if next(pdata.current_beltnet_table) then
-                    --destroy_markers(pdata.current_marker_table)
-                    --destroy_markers(pdata.current_beltnet_table)
                     destroy_markers(pdata.current_marker_table)
                     pdata.current_beltnet_table = nil
                     pdata.current_marker_table = nil
                     pdata.scheduled_markers = nil
                 end
-                profiler = game.create_profiler()
-                log("Started marking")
-                global.total_belts_marked = 0
-                global.start_tick = game.tick
-                highlight_belts(selection, event.player_index, true, true)
-                profiler.stop()
-            end
-        else
-            if next(pdata.current_beltnet_table) then
-                --destroy_markers(pdata.current_marker_table)
-                --destroy_markers(pdata.current_beltnet_table)
-                destroy_markers(pdata.current_marker_table)
-                pdata.current_beltnet_table = nil
-                pdata.current_marker_table = nil
-                pdata.scheduled_markers = nil
             end
         end
-    end
-    --Profiler.Stop(nil)
+    end -- Toggled off, or alt-mode off
 end
 Event.register(defines.events.on_selected_entity_changed, get_beltline, nil, nil, options)
 
@@ -1208,11 +1198,11 @@ local function highlight_scheduler()
         local _, pdata = Player.get(player_index)
         local wt = pdata.scheduled_markers and pdata.scheduled_markers[1]
         if wt and next(wt) then
+            --break
             local next_belt = table.remove(wt, 1)
             if next_belt[1].valid then
                 highlight_belts(next_belt[1], player_index, next_belt[2] == 'forward' and true or false, next_belt[2] == 'backward' and true or false, next_belt[3])
             end
-            --break
         elseif pdata.scheduled_markers and not next(pdata.scheduled_markers[1]) and pdata.scheduled_markers[2] and next(pdata.scheduled_markers[2]) then
             table.remove(pdata.scheduled_markers, 1)
         else
@@ -1222,10 +1212,10 @@ local function highlight_scheduler()
     end
     if not next(global.marking_players) then
         global.marking = false
-        log(p)
-        log("Ended marking")
-        log(global.total_belts_marked .. " total belts marked")
-        log(game.tick - global.start_tick .. " ticks required to complete")
+        log(profiler)
+        log('Ended marking')
+        log(global.total_belts_marked .. ' total belts marked')
+        log(game.tick - global.start_tick .. ' ticks required to complete')
     end
     if global.marking and global.belts_marked_this_tick < max_belts then
         return highlight_scheduler()
@@ -1241,5 +1231,24 @@ local function max_belts_handler()
     end
     profiler = nil
 end
-
 Event.register(defines.events.on_tick, max_belts_handler, nil, nil, options)
+
+local function on_lua_shortcut(event)
+    if event.prototype_name == 'picker-belt-highlighter' then
+        local player = game.get_player(event.player_index)
+        if player.is_shortcut_available('picker-belt-highlighter') then
+            player.set_shortcut_toggled('picker-belt-highlighter', not player.is_shortcut_toggled('picker-belt-highlighter'))
+        end
+    end
+end
+Event.register(defines.events.on_lua_shortcut, on_lua_shortcut)
+
+local function on_player_toggled_alt_mode(event)
+    local player = game.get_player(event.player_index)
+    if not player.game_view_settings.show_entity_info then
+        log('Toggled game_view_settings.show_entity_info')
+        -- cleanup renderings
+        -- make ticker stop
+    end
+end
+Event.register(defines.events.on_player_toggled_alt_mode, on_player_toggled_alt_mode)

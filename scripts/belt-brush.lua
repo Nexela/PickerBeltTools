@@ -132,6 +132,15 @@ end
 -------------------------------------------------------------------------------
 --[Automatic Corners]--
 -------------------------------------------------------------------------------
+local function mirror_corners(stack)
+    local entities = stack.get_blueprint_entities()
+    for i, entity in pairs(entities) do
+        entity.direction = (0 - (entity.direction or 0)) % 8
+        entity.position.x = -1 * entity.position.x
+    end
+    stack.set_blueprint_entities(entities)
+end
+
 local function build_corner_brush(stack, belt, lanes)
     if lanes >= 1 and lanes <= 32 then
         local new_ents = {}
@@ -305,6 +314,8 @@ local function beltbrush_corners(event)
                 build_ptg_brush(stack, ptg, stored)
             end
         elseif stack.label:find('Belt Brush Corner Left') then
+            --Event.raise_event(Event.get_event_name('on_blueprint_mirrored'), {player_index = player.index, corner = true})
+            mirror_corners(stack)
             stack.label = 'Belt Brush Corner Right ' .. stack.label:match('%d+')
         elseif stack.label:find('Belt Brush Corner Right') then
             build_beltbrush(stack, belt.name, tonumber(stack.label:match('%d+')))

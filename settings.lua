@@ -1,5 +1,4 @@
-data:extend{
-
+data:extend {
     {
         type = 'int-setting',
         name = 'picker-max-belt-distance',
@@ -8,6 +7,5 @@ data:extend{
         maximum_value = 500,
         default_value = 80,
         order = 'picker-b'
-    },
-
+    }
 }

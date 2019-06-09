@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.0
 Date: ??????
+  Features:
+    - Auto Circuit wires when builing long range poles.
   Bugfixes:
     - Fixed blueprint corners error when Picker Blueprinter not present.
 ---------------------------------------------------------------------------------------------------

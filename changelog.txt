@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.0
+Date: ??????
+  Features:
+    - Hightlight uses Rendering system.
+    - Auto Circuit wires when builing long range poles.
+    - Belt Highlighter has a toggle to control it.
+  Bugfixes:
+    - Fixed blueprint corners error when Picker Blueprinter not present.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.2
 Date: ??????
   Features:

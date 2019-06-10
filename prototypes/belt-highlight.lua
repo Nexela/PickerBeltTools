@@ -21,6 +21,29 @@ Data {
     }
 }
 
+local belt_marker_box = {}
+belt_marker_box[#belt_marker_box + 1] = {
+    type = 'sprite',
+    name = 'picker-belt-marker-box-good',
+    width = 64,
+    height = 64,
+    x = 192,
+    y = 0,
+    scale = 0.5,
+    filename = '__core__/graphics/cursor-boxes-32x32.png'
+}
+belt_marker_box[#belt_marker_box + 1] = {
+    type = 'sprite',
+    name = 'picker-belt-marker-box-bad',
+    width = 64,
+    height = 64,
+    x = 64,
+    y = 0,
+    scale = 0.5,
+    filename = '__core__/graphics/cursor-boxes-32x32.png'
+}
+
+
 local belt_sprite_prototypes = {}
 do
     local i = 1
@@ -113,58 +136,4 @@ end
 data:extend(belt_sprite_prototypes)
 data:extend(splitter_sprite_prototypes)
 data:extend(ug_belt_sprite_prototypes)
-
-local base_beam = Data('electric-beam-no-sound', 'beam'):copy('picker-underground-belt-marker-beam')
-base_beam.width = 1.0
-base_beam.damage_interval = 2000000000
-base_beam.action = nil
-base_beam.start = {
-    filename = '__PickerBeltTools__/graphics/empty_1x16.png',
-    line_length = 1,
-    width = 1,
-    height = 1,
-    frame_count = 16,
-    axially_symmetrical = false,
-    direction_count = 1
-}
-base_beam.ending = {
-    filename = '__PickerBeltTools__/graphics/empty_1x16.png',
-    line_length = 1,
-    width = 1,
-    height = 1,
-    frame_count = 16,
-    axially_symmetrical = false,
-    direction_count = 1
-}
-base_beam.head = {
-    filename = '__PickerBeltTools__/graphics/entity/markers/underground-lines-animated.png',
-    flags = {'no-crop'},
-    line_length = 8,
-    width = 64,
-    height = 64,
-    frame_count = 16,
-    animation_speed = 0.03125 * 16,
-    scale = 0.5
-}
-base_beam.tail = {
-    filename = '__PickerBeltTools__/graphics/entity/markers/underground-lines-animated.png',
-    flags = {'no-crop'},
-    line_length = 8,
-    width = 64,
-    height = 64,
-    frame_count = 16,
-    animation_speed = 0.03125 * 16,
-    scale = 0.5
-}
-base_beam.body = {
-    {
-        filename = '__PickerBeltTools__/graphics/entity/markers/underground-lines-animated.png',
-        flags = {'no-crop'},
-        line_length = 8,
-        width = 64,
-        height = 64,
-        frame_count = 16,
-        animation_speed = 0.03125 * 16,
-        scale = 0.5
-    }
-}
+data:extend(belt_marker_box)

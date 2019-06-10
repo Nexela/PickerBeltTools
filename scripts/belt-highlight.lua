@@ -250,6 +250,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     pdata.current_beltnet_table = all_entities_marked
 
     pdata.scheduled_markers = pdata.scheduled_markers or {}
+
     local working_table = 1
     if pdata.scheduled_markers[1] and next(pdata.scheduled_markers[1]) then
         working_table = 2
@@ -1200,7 +1201,6 @@ local function max_belts_handler()
         Event.remove(defines.events.on_tick, max_belts_handler)
     end
 end
-Event.register(defines.events.on_tick, max_belts_handler, nil, nil, options)
 
 local function check_selection(event)
     local player, pdata = Player.get(event.player_index)
@@ -1275,3 +1275,11 @@ local function on_player_created(event)
     end
 end
 Event.register(defines.events.on_player_created, on_player_created)
+
+Event.on_load(
+    function()
+        if global.marking then
+            Event.register(defines.events.on_tick, max_belts_handler, nil, nil, options)
+        end
+    end
+)

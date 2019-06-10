@@ -14,6 +14,11 @@ local options = {
     skip_valid = true
 }
 
+local protected = {
+    protected_mode = Event.options.protected_mode,
+    skip_valid = true
+}
+
 local op_dir = Direction.opposite_direction
 local max_belts = 500
 local empty = {}
@@ -241,7 +246,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     local all_entities_marked = pdata.current_beltnet_table and pdata.current_beltnet_table or {}
     local all_markers = pdata.current_marker_table and pdata.current_marker_table or {}
 
-    local belts_read = global.belts_marked_this_tick > 0 and global.belts_marked_this_tick or 0
+    local belts_read = (global.belts_marked_this_tick or 0)> 0 and global.belts_marked_this_tick or 0
     --local belts_read = 0
     local markers_made = next(all_markers) and #all_markers or 0
 
@@ -1239,7 +1244,7 @@ local function check_selection(event)
         end
     end -- Toggled off, or alt-mode off
 end
-Event.register(defines.events.on_selected_entity_changed, check_selection, nil, nil, options)
+Event.register(defines.events.on_selected_entity_changed, check_selection, nil, nil, protected)
 
 
 local function on_lua_shortcut(event)

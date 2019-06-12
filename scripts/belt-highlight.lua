@@ -507,7 +507,11 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                                 end
                             else
                                 local input = read_entity_data[ug_neighbour_unit_number][2].input
-                                input[#input + 1] = {entity_unit_number, entity_direction}
+                                if input then
+                                    input[#input + 1] = {entity_unit_number, entity_direction}
+                                else
+                                    read_entity_data[ug_neighbour_unit_number][2].input = {{entity_unit_number, entity_direction}}
+                                end
                             end
                         end
                     end

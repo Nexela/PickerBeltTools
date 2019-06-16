@@ -1,0 +1,18 @@
+// {type:activity}
+(start) -> (on_selected_entity_changed)
+(on_selected_entity_changed)[alt_mode and shortcut] -> <first_if>
+<first_if>[ON] -> |a|
+<first_if>[OFF] -> (end)
+|a|[selection and allowed type] -> <check_selection_allowed>
+<check_selection_allowed>[valid and allowed] -> (Assign working tables|Assign schedule table)
+<check_selection_allowed>[invalid or not allowed] -> |b|[Is there a beltnet for this player] -> <c>
+(Assign working tables)[1] -> |g|
+|g|[Selection already marked by this player] -> <e>
+<e>[No] -> |b|
+<e>[Yes] -> (end)
+<c>[Yes] -> (Destroy old markers|Unassign player tables)
+(Assign working tables)[2] -> (highlight_belts)[Was there a need for a queue?] -> <f>
+<f>[Yes] -> (Register on tick handler)
+<f>[No] -> (end)
+(Register on tick handler) -> (end)
+<c>[No] -> (end)

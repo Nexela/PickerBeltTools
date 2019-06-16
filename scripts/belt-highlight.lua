@@ -20,7 +20,7 @@ local protected = {
 }
 
 local op_dir = Direction.opposite_direction
-local max_belts = 2
+local max_belts = 500
 local empty = {}
 local create_sprite = _G.rendering.draw_sprite
 local create_line = _G.rendering.draw_line
@@ -1226,13 +1226,6 @@ local function highlight_scheduler()
         return highlight_scheduler()
     end
 end
-local function tablelength(T)
-    local count = 0
-    if T then
-        for _ in pairs(T) do count = count + 1 end
-        return count
-    end
-  end
 
 local function max_belts_handler()
     if global.marking then
@@ -1240,14 +1233,9 @@ local function max_belts_handler()
         highlight_scheduler()
     else
         global.belts_marked_this_tick = 0
-        Event.remove(defines.events.on_tick, max_belts_handler)
-        local _,pdata = Player.get(1)
-        if pdata.current_beltnet_table and next(pdata.current_beltnet_table) then
-            local p = game.create_profiler()
-            game.print(tablelength(pdata.current_beltnet_table))
-            game.print(p)
-            p = nil
-        end
+        remote.call("PickerAtheneum","queue_remove",{token = global.queue_token})
+        Event.remove(global.queue_token,max_belts_handler)
+        global.queue_token = nil
     end
 end
 
@@ -1275,7 +1263,9 @@ local function check_selection(event)
                     global.total_belts_marked = 0
                     highlight_belts(selection, event.player_index, true, true)
                     if global.marking then
-                        Event.register(defines.events.on_tick, max_belts_handler, nil, nil, options)
+                        local token = remote.call("PickerAtheneum","queue_add",{mod_name = "PickerBeltTools"})
+                        global.queue_token = token
+                        Event.register(token, max_belts_handler, nil, nil, options)
                     end
                 end
             else
@@ -1328,8 +1318,10 @@ Event.register(defines.events.on_player_created, on_player_created)
 
 Event.on_load(
     function()
-        if global.marking then
-            Event.register(defines.events.on_tick, max_belts_handler, nil, nil, options)
+        if global.queue_token then
+            local token = remote.call("PickerAtheneum","queue_reestablish",{mod_name = "Mod name"})
+            global.queue_token = token
+            Event.register(token, max_belts_handler)
         end
     end
 )

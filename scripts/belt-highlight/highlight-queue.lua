@@ -26,14 +26,19 @@ local function highlight_handler()
     if index then
         highlight_queue(index, queue)
     else
-        Event.remove(defines.events.on_tick, highlight_handler)
+        remote.call("PickerAtheneum","queue_remove",{token = global.queue_token})
+        Event.remove(global.queue_token,highlight_handler)
+        global.queue_token = nil
     end
 end
 
 local function add_to_highlight_queue(pdata, table_name)
     if next(pdata[table_name]) then
-        if not next(global.highlight_queue) then
-            Event.register(defines.events.on_tick, highlight_handler, nil, nil, setup.tick_options)
+        if global.highlight_queue and not next(global.highlight_queue) then
+            local token = remote.call("PickerAtheneum","queue_add",{mod_name = "PickerBeltTools_highlight"})
+            global.queue_token = token
+            Event.register(token, highlight_handler, nil, nil, setup.tick_options)
+            --Event.register(defines.events.on_tick, highlight_handler, nil, nil, setup.tick_options)
         end
         global.highlight_queue[#global.highlight_queue + 1] = pdata[table_name]
         pdata[table_name] = {}
@@ -42,8 +47,12 @@ local function add_to_highlight_queue(pdata, table_name)
 end
 
 local function on_load()
-    if next(global.highlight_queue) then
-        Event.register(defines.events.on_tick, highlight_handler, nil, nil, setup.tick_options)
+    if global.highlight_queue and next(global.highlight_queue) then
+        if global.queue_token then
+            local token = remote.call("PickerAtheneum","queue_reestablish",{mod_name = "PickerBeltTools_highlight"})
+            global.queue_token = token
+            Event.register(token, highlight_handler)
+        end
     end
 end
 Event.on_load(on_load)

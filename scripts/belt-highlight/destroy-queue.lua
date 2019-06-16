@@ -26,7 +26,9 @@ local function destroy_handler()
     if index then
         destroy_queue(index, queue)
     else
-        Event.remove(defines.events.on_tick, destroy_handler)
+        remote.call("PickerAtheneum","queue_remove",{token = global.queue_token})
+        Event.remove(global.queue_token,destroy_handler())
+        global.queue_token = nil
     end
 end
 
@@ -34,8 +36,10 @@ end
 local function add_to_destroy_queue(pdata)
     if next(pdata.markers) then
         -- Start the ticker if it is not already running, destruction starts on the next tick
-        if not next(global.destroy_queue) then
-            Event.register(defines.events.on_tick, destroy_handler, nil, nil, setup.tick_options)
+        if global.destroy_queue and not next(global.destroy_queue) then
+            local token = remote.call("PickerAtheneum","queue_add",{mod_name = "PickerBeltTools_destroy"})
+            global.queue_token = token
+            Event.register(token, destroy_handler, nil, nil, setup.tick_options)
         end
         -- Swap the markers table to destroy queue, and create a new empty markers table
         global.destroy_queue[#global.destroy_queue + 1] = pdata.markers
@@ -52,8 +56,10 @@ local function add_to_destroy_queue(pdata)
 end
 
 local function on_load()
-    if next(global.destroy_queue) then
-        Event.register(defines.events.on_tick, destroy_handler, nil, nil, setup.tick_options)
+    if global.destroy_queue and next(global.destroy_queue) then
+        local token = remote.call("PickerAtheneum","queue_reestablish",{mod_name = "PickerBeltTools_destroy"})
+        global.queue_token = token
+        Event.register(token, destroy_handler)
     end
 end
 Event.on_load(on_load)

@@ -60,7 +60,7 @@ Event.register(defines.events.on_lua_shortcut, on_lua_shortcut)
 local function on_player_toggled_alt_mode(event)
     local player, pdata = Player.get(event.player_index)
     if not player.game_view_settings.show_entity_info then
-        if next(pdata.markers) then
+        if pdata.markers and next(pdata.markers) then
             destroy_queue(pdata)
             pdata.belts = {}
             pdata.undergrounds = {}

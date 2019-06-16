@@ -19,26 +19,23 @@ local function on_selected_entity_changed(event)
     if player.is_shortcut_toggled('picker-belt-highlighter') and player.game_view_settings.show_entity_info then
         local selected = player.selected
         if selected and setup.allowed_types[selected.type] then
-            if not pdata.belts[selected.unit_number] then
+            if pdata.markers then
                 -- Start over
-                destroy_queue(pdata)
-                pdata.belts = {}
+                destroy_queue(pdata, 'markers', 'belts')
             end
             --walk_belts()
             highlight_queue(pdata, 'belts')
-        else
-            destroy_queue(pdata)
-            pdata.belts = {}
+        elseif pdata.markers then
+            destroy_queue(pdata, 'markers', 'belts')
         end
     end -- Toggled off, or alt-mode off
 end
---Event.register(defines.events.on_selected_entity_changed, on_selected_entity_changed)
+Event.register(defines.events.on_selected_entity_changed, on_selected_entity_changed)
 
 local function highlight_underground(event)
     local _, pdata = Player.get(event.player_index)
-    if next(pdata.markers) then
-        destroy_queue(pdata)
-        pdata.undergrounds = {}
+    if pdata.ug_markers then
+        destroy_queue(pdata, 'ug_markers', 'undergrounds')
     else
         show_underground_sprites(event)
     end
@@ -51,6 +48,7 @@ local function on_lua_shortcut(event)
         local player = Player.get(event.player_index)
         if player.is_shortcut_available('picker-belt-highlighter') then
             player.set_shortcut_toggled('picker-belt-highlighter', not player.is_shortcut_toggled('picker-belt-highlighter'))
+            --toggle the highlighter
         end
     end
 end
@@ -60,11 +58,8 @@ Event.register(defines.events.on_lua_shortcut, on_lua_shortcut)
 local function on_player_toggled_alt_mode(event)
     local player, pdata = Player.get(event.player_index)
     if not player.game_view_settings.show_entity_info then
-        if next(pdata.markers) then
-            destroy_queue(pdata)
-            pdata.belts = {}
-            pdata.undergrounds = {}
-            pdata.belt_end_points = {}
+        if pdata.markers then
+            destroy_queue(pdata, 'markers', 'belts', 'undergrounds', 'belt_end_points')
         end
     else
         on_selected_entity_changed(event)
@@ -81,5 +76,3 @@ local function on_player_created(event)
     end
 end
 Event.register(defines.events.on_player_created, on_player_created)
-
-Player.additional_data({belts = {}, undergrounds = {}, markers = {}})

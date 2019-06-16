@@ -3,7 +3,7 @@ local Position = require('__stdlib__/stdlib/area/position')
 local setup = {}
 
 setup.tick_options = {
-    protected_mode = false,
+    protected_mode = true,
     skip_valid = true
 }
 

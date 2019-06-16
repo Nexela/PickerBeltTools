@@ -7,10 +7,10 @@ local highlight_queue = require('scripts/belt-highlight/highlight-queue')
 -- Store the belts in pdata.belts
 local function show_underground_sprites(event)
     local player, pdata = Player.get(event.player_index)
-
+    pdata.undergrounds = {}
     local surface = player.surface
 
-    local radius = settings.global['picker-max-belt-distance'].value
+    local radius = settings.global['picker-underground-search-radius'].value
 
     local filter = {
         area = Position(player.position):expand_to_area(radius),
@@ -22,7 +22,8 @@ local function show_underground_sprites(event)
         local unit = underground.unit_number
         pdata.undergrounds[unit] = {
             entity = underground,
-            player_index = player.index
+            player_index = player.index,
+            marker_table = 'ug_markers'
         }
         local neighbour = underground.neighbours
         local offset = setup.ug_marker_table[underground.direction]

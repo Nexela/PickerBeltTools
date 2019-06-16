@@ -3,12 +3,19 @@ local setup = require('scripts/belt-highlight/setup')
 
 -- Iterate the internal queue and destroy up to MAX marks per tick.
 local function destroy_queue(queue_index, queue)
-    local counter, MAX = 0, 100 -- Map setting of Max belts per tick.
+    local counter, MAX = 0, settings.global['picker-max-renders-tick'].value -- Map setting of Max belts per tick.
     for index, mark in pairs(queue) do
-        rendering.destroy(mark)
-        queue[index] = nil
-        counter = counter + 1
-        if counter == MAX then
+        if type(mark) == 'table' then
+            for _, inner_mark in pairs(mark) do
+                rendering.destroy(inner_mark)
+                counter = counter + 1
+            end
+        else
+            rendering.destroy(mark)
+            counter = counter + 1
+        end
+        queue[index] = nil --remove the marker from the queue
+        if counter >= MAX then
             break
         end
     end
@@ -27,24 +34,31 @@ local function destroy_handler()
         destroy_queue(index, queue)
     else
         Event.remove(defines.events.on_tick, destroy_handler)
+        global.destroy_queue = nil
     end
 end
 
 -- The function used to swap markers to the destroy Queue
-local function add_to_destroy_queue(pdata)
-    if next(pdata.markers) then
+local function add_to_destroy_queue(pdata, marker_name, ...)
+    if pdata[marker_name] then
         -- Start the ticker if it is not already running, destruction starts on the next tick
-        if not next(global.destroy_queue) then
+        if not global.destroy_queue then
             Event.register(defines.events.on_tick, destroy_handler, nil, nil, setup.tick_options)
+            global.destroy_queue = {}
         end
         -- Swap the markers table to destroy queue, and create a new empty markers table
-        global.destroy_queue[#global.destroy_queue + 1] = pdata.markers
-        pdata.markers = {}
+        global.destroy_queue[#global.destroy_queue + 1] = pdata[marker_name]
+        pdata[marker_name] = nil
+        for _, name in pairs({...}) do
+            pdata[name] = nil
+        end
         -- stop the queue of anything else for this player?
-        for queue_index, queue in pairs(global.highlight_queue) do
-            local _, queue_data = next(queue)
-            if queue_data and pdata.index == queue_data.player_index then
-                global.highlight_queue[queue_index] = nil
+        if global.highlight_queue then
+            for queue_index, queue in pairs(global.highlight_queue) do
+                local _, queue_data = next(queue)
+                if queue_data and pdata.index == queue_data.player_index then
+                    global.highlight_queue[queue_index] = nil
+                end
             end
         end
         return true
@@ -52,20 +66,10 @@ local function add_to_destroy_queue(pdata)
 end
 
 local function on_load()
-    if next(global.destroy_queue) then
+    if global.destroy_queue then
         Event.register(defines.events.on_tick, destroy_handler, nil, nil, setup.tick_options)
     end
 end
 Event.on_load(on_load)
-
-local function on_init()
-    global.destroy_queue = {}
-end
-Event.on_init(on_init)
-
-local function on_configuration_changed()
-    global.destroy_queue = global.destroy_queue or {}
-end
-Event.on_configuration_changed(on_configuration_changed)
 
 return add_to_destroy_queue

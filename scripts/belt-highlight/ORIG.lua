@@ -788,7 +788,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     entity,
                     belt_to_ground_direction
                 }
-                belts_read = belts_read + 1
+                belts_read = belts_read + 1.5
             end
             read_entity_data[entity_unit_number] = current_entity
             --rendering.draw_text{text = belts_read, surface = surface, color = {1,0,1,1}, target = entity_position}

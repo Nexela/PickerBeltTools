@@ -41,7 +41,7 @@ local function highlight_handler()
 end
 
 local function add_to_highlight_queue(pdata, table_name)
-    if next(pdata[table_name]) then
+    if pdata[table_name] and next(pdata[table_name]) then
         if global.highlight_queue and not next(global.highlight_queue) then
             local token = remote.call("PickerAtheneum","queue_add",{mod_name = "PickerBeltTools_highlight"})
             global.queue_token = token

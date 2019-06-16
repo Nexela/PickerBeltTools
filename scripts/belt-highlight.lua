@@ -341,7 +341,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             players = {player_index}
         }
         all_markers[markers_made] = new_marker
-        all_entities_marked[unit_number] = true
+        all_entities_marked[unit_number] = new_marker
     end
 
     local function mark_ug_segment(start_position, end_position, entity_direction)
@@ -400,7 +400,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             players = {player_index}
         }
         all_markers[markers_made] = new_marker
-        all_entities_marked[unit_number] = true
+        all_entities_marked[unit_number] = new_marker
     end
 
     local function get_directions_splitter(current_entity)
@@ -425,7 +425,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             players = {player_index}
         }
         all_markers[markers_made] = new_marker
-        all_entities_marked[unit_number] = true
+        all_entities_marked[unit_number] = new_marker
     end
 
     local function cache_forward_ug_belt_connector(entity, entity_unit_number, entity_position, entity_type, entity_direction, belt_to_ground_direction, previous_entity_unit_number, previous_entity_direction, previous_entity_input_side)
@@ -577,7 +577,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     end
                 end
             elseif entity_type == 'transport-belt' then
-                --? Splitter handling
+                --? Transport belt handling
                 local forward_position = Position(entity_position):translate(entity_direction, 1)
                 local forward_entity = read_forward_belt(forward_position)
                 if forward_entity then
@@ -1007,7 +1007,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     entity,
                     belt_to_ground_direction
                 }
-                belts_read = belts_read + 1
+                belts_read = belts_read + 1.5
             end
             read_entity_data[entity_unit_number] = current_entity
             --rendering.draw_text{text = belts_read, surface = surface, color = {1,0,1,1}, target = entity_position}
@@ -1187,7 +1187,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 local end_position = neighbour_entity_data[1]
                 mark_ug_belt(unit_number, current_entity)
                 mark_ug_segment(start_position, end_position, current_entity[4])
-                all_entities_marked[unit_number] = true
             elseif current_entity[3] == 'transport-belt' then
                 mark_belt(unit_number, current_entity)
             elseif current_entity[3] == 'splitter' then
@@ -1220,7 +1219,6 @@ local function highlight_scheduler()
     end
     if not next(global.marking_players) then
         global.marking = false
-        game.print(global.total_belts_marked)
     end
     if global.marking and global.belts_marked_this_tick < max_belts then
         return highlight_scheduler()

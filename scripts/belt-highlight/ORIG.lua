@@ -9,26 +9,11 @@ local Player = require('__stdlib__/stdlib/event/player')
 local Position = require('__stdlib__/stdlib/area/position')
 local Direction = require('__stdlib__/stdlib/area/direction')
 
-
-
-
 local op_dir = Direction.opposite_direction
 local max_belts = 2
 local empty = {}
 local create_sprite = rendering.draw_sprite
 local create_line = rendering.draw_line
-
-
-
-
-
-local function destroy_markers(markers)
-    local destroy = rendering.destroy
-    for _, mark in pairs(markers or empty) do
-        destroy(mark)
-    end
-end
-
 
 
 

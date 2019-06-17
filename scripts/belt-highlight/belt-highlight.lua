@@ -2,6 +2,7 @@ local Event = require('__stdlib__/stdlib/event/event')
 local Player = require('__stdlib__/stdlib/event/player')
 
 local setup = require('scripts/belt-highlight/setup')
+local walk_belts = require('scripts/belt-highlight/belt-walker')
 local highlight_queue = require('scripts/belt-highlight/highlight-queue')
 local destroy_queue = require('scripts/belt-highlight/destroy-queue')
 local show_underground_sprites = require('scripts/belt-highlight/undergrounds')
@@ -21,12 +22,12 @@ local function on_selected_entity_changed(event)
         if selected and setup.allowed_types[selected.type] then
             if pdata.markers then
                 -- Start over
-                destroy_queue(pdata, 'markers', 'belts')
+                --destroy_queue(pdata, 'markers', 'belts')
             end
-            --walk_belts()
-            highlight_queue(pdata, 'belts')
+            walk_belts(pdata, selected)
+            --highlight_queue(pdata, 'belts')
         elseif pdata.markers then
-            destroy_queue(pdata, 'markers', 'belts')
+            --destroy_queue(pdata, 'markers', 'belts')
         end
     end -- Toggled off, or alt-mode off
 end

@@ -1,18 +1,28 @@
 // {type:activity}
-(start) -> (on_selected_entity_changed)
-(on_selected_entity_changed)[alt_mode and shortcut] -> <first_if>
-<first_if>[ON] -> |a|
-<first_if>[OFF] -> (end)
-|a|[selection and allowed type] -> <check_selection_allowed>
-<check_selection_allowed>[valid and allowed] -> (Assign working tables|Assign schedule table)
-<check_selection_allowed>[invalid or not allowed] -> |b|[Is there a beltnet for this player] -> <c>
-(Assign working tables)[1] -> |g|
-|g|[Selection already marked by this player] -> <e>
-<e>[No] -> |b|
+(start) -> (highlight_belts) -> (read_belts)
+(read_belts)[1] -> (step_forward)
+
+(step_forward)[Current Entity Type] -> <a>
+<a>[underground-belt]-> (-Read and assign variables-|ug_neighbour|belt_to_ground_type)[Belt to ground type] -> <c>
+<c>[INPUT] -> (Cache belt to ground type in array)[Is there an underground neighbour?\nBelt to ground inputs can only\noutput to a neighbour] -> <d>
+<d>[Yes] -> (-Read and assign for input-|ug_neighbour_type Matches current entity|ug_neighbour_direction Matches current entity|ug_neighbour_position Read from entity|ug_neighbour_unit_number Read from entity)[Is this entity already marked] -> <e>
+<d>[No] -> (end)
+<e>[No] -> |f|
 <e>[Yes] -> (end)
-<c>[Yes] -> (Destroy old markers|Unassign player tables)
-(Assign working tables)[2] -> (highlight_belts)[Was there a need for a queue?] -> <f>
-<f>[Yes] -> (Register on tick handler)
-<f>[No] -> (end)
-(Register on tick handler) -> (end)
-<c>[No] -> (end)
+|f|[Is this entity already read] -> <g>
+<g>[Yes] -> (Get neighbour cache data)-> (Store as input to that entity) -> (end)
+<g>[No] -> |h|[Is the current amount of belts read\nless than the max belts] -> <i>
+<i>[Yes] -> (step_forward)
+<i>[No] -> (-Cache for next tick-|global.marking = true|global.marking_players[player] = true|Store entity reference and cached data) -> (end)
+<c>[OUTPUT] -> (find_entity_filtered\n1 tile in front of belt)[Is there a belt here?] -> <j>
+<j>[No] -> (end)
+<j>[Yes] -> (-Cache entity data-|get direction|get type|verify direction is valid|get unit number|store as output to current entity)->|k|
+|k|[Is forward entity a splitter] -> <l>
+<l>[Yes] -> (Find input side for splitter)
+|k| -> <g>
+<a>[transport-belt] -> (find_entity_filtered\n1 tile in front of belt)
+<a>[splitter] -> (read_forward_splitter)[Find entity filtered\n left and right output entity] -> |m|
+|m|[Left output entity] -> (-Cache entity data-)
+|m|[Right output entity] -> (-Cache entity data-)
+
+(read_belts)[2] -> (step_backward)

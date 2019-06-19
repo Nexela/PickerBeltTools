@@ -104,4 +104,26 @@ setup.splitter_check_table = {
     }
 }
 
+setup.find_direction_map = {
+    [defines.direction.north] = {
+        defines.direction.east,
+        defines.direction.west,
+        defines.direction.south
+    },
+    [defines.direction.east] = {
+        defines.direction.north,
+        defines.direction.west,
+        defines.direction.south
+    },
+    [defines.direction.south] = {
+        defines.direction.north,
+        defines.direction.east,
+        defines.direction.west
+    },
+    [defines.direction.west] = {
+        defines.direction.north,
+        defines.direction.east,
+        defines.direction.south
+    }
+}
 return setup

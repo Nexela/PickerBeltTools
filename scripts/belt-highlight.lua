@@ -1233,7 +1233,7 @@ local function max_belts_handler()
     else
         global.belts_marked_this_tick = 0
         global.marking = false
-        remote.call("PickerAtheneum","queue_remove",{name = "PickerBeltTools",f_name = "max_belts_handler"})
+        remote.call("PickerAtheneum","queue_remove","PickerBeltTools","max_belts_handler")
     end
 end
 
@@ -1259,9 +1259,11 @@ local function check_selection(event)
                         pdata.scheduled_markers = nil
                     end
                     global.total_belts_marked = 0
+                    global.belts_marked_this_tick = 0
+
                     highlight_belts(selection, event.player_index, true, true)
                     if global.marking then
-                        remote.call("PickerAtheneum","queue_add",{name = "PickerBeltTools",f_name="max_belts_handler"})
+                        remote.call("PickerAtheneum","queue_add","PickerBeltTools","max_belts_handler")
                     end
                 end
             else

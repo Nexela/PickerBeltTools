@@ -8,6 +8,7 @@ local Event = require('__stdlib__/stdlib/event/event')
 local Player = require('__stdlib__/stdlib/event/player')
 local Position = require('__stdlib__/stdlib/area/position')
 local Direction = require('__stdlib__/stdlib/area/direction')
+local Interface = require('__stdlib__/stdlib/scripts/interface')
 
 local options = {
     protected_mode = false,
@@ -20,7 +21,7 @@ local protected = {
 }
 
 local op_dir = Direction.opposite_direction
-local max_belts = 500
+local max_belts = 5
 local empty = {}
 local create_sprite = _G.rendering.draw_sprite
 local create_line = _G.rendering.draw_line
@@ -1231,9 +1232,8 @@ local function max_belts_handler()
         highlight_scheduler()
     else
         global.belts_marked_this_tick = 0
-        remote.call("PickerAtheneum","queue_remove",{token = global.queue_token})
-        Event.remove(global.queue_token,max_belts_handler)
-        global.queue_token = nil
+        global.marking = false
+        remote.call("PickerAtheneum","queue_remove",{name = "PickerBeltTools",f_name = "max_belts_handler"})
     end
 end
 
@@ -1261,9 +1261,7 @@ local function check_selection(event)
                     global.total_belts_marked = 0
                     highlight_belts(selection, event.player_index, true, true)
                     if global.marking then
-                        local token = remote.call("PickerAtheneum","queue_add",{mod_name = "PickerBeltTools"})
-                        global.queue_token = token
-                        Event.register(token, max_belts_handler, nil, nil, options)
+                        remote.call("PickerAtheneum","queue_add",{name = "PickerBeltTools",f_name="max_belts_handler"})
                     end
                 end
             else
@@ -1314,12 +1312,6 @@ local function on_player_created(event)
 end
 Event.register(defines.events.on_player_created, on_player_created)
 
-Event.on_load(
-    function()
-        if global.queue_token then
-            local token = remote.call("PickerAtheneum","queue_reestablish",{mod_name = "Mod name"})
-            global.queue_token = token
-            Event.register(token, max_belts_handler)
-        end
-    end
-)
+Interface['max_belts_handler'] = function()
+    max_belts_handler()
+end

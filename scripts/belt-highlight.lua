@@ -8,6 +8,7 @@ local Event = require('__stdlib__/stdlib/event/event')
 local Player = require('__stdlib__/stdlib/event/player')
 local Position = require('__stdlib__/stdlib/area/position')
 local Direction = require('__stdlib__/stdlib/area/direction')
+local Interface = require('__stdlib__/stdlib/scripts/interface')
 
 local options = {
     protected_mode = false,
@@ -20,7 +21,7 @@ local protected = {
 }
 
 local op_dir = Direction.opposite_direction
-local max_belts = 2
+local max_belts = 5
 local empty = {}
 local create_sprite = _G.rendering.draw_sprite
 local create_line = _G.rendering.draw_line
@@ -108,7 +109,7 @@ local function show_underground_sprites(event)
     --? Assign working table reference to global reference under player
     pdata.current_underground_marker_table = all_markers
 
-    local max_distance = settings.global['picker-max-belt-distance'].value
+    local max_distance = settings.global['picker-underground-search-radius'].value
 
     local filter = {
         area = {{player.position.x - max_distance, player.position.y - max_distance}, {player.position.x + max_distance, player.position.y + max_distance}},
@@ -335,17 +336,32 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local new_marker =
             create_sprite {
             sprite = 'picker-ug-belt-marker-' .. graphics_change,
-            target = current_entity[1],
+            target = current_entity[5],
             surface = surface,
             only_in_alt_mode = true,
             players = {player_index}
         }
         all_markers[markers_made] = new_marker
-        all_entities_marked[unit_number] = true
+        all_entities_marked[unit_number] = new_marker
     end
 
-    local function mark_ug_segment(start_position, end_position, entity_direction)
-        local ug_marker = ug_marker_table[entity_direction]
+    local function mark_ug_segment(current_entity, neighbour_entity)
+        local ug_marker = ug_marker_table[current_entity[4]]
+        markers_made = markers_made + 1
+        all_markers[markers_made] =
+            create_line{
+                color = {r = 1, g = 1, b = 0, a = 1},
+                width = 3,
+                gap_length = 0.5,
+                dash_length = 0.5,
+                from = current_entity[5],
+                from_offset = ug_marker.left,
+                to = neighbour_entity[5],
+                to_offset = ug_marker.rev_left,
+                surface = surface,
+                only_in_alt_mode = true,
+                players = {player_index}
+            }
         markers_made = markers_made + 1
         all_markers[markers_made] =
             create_line {
@@ -353,21 +369,10 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             width = 3,
             gap_length = 0.5,
             dash_length = 0.5,
-            from = start_position + ug_marker.left,
-            to = end_position + ug_marker.rev_left,
-            surface = surface,
-            only_in_alt_mode = true,
-            players = {player_index}
-        }
-        markers_made = markers_made + 1
-        all_markers[markers_made] =
-            create_line {
-            color = {r = 1, g = 1, b = 0, a = 1},
-            width = 3,
-            gap_length = 0.5,
-            dash_length = 0.5,
-            from = start_position + ug_marker.right,
-            to = end_position + ug_marker.rev_right,
+            from = current_entity[5],
+            from_offset = ug_marker.right,
+            to = neighbour_entity[5],
+            to_offset = ug_marker.rev_right,
             surface = surface,
             only_in_alt_mode = true,
             players = {player_index}
@@ -394,13 +399,13 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local new_marker =
             create_sprite {
             sprite = 'picker-belt-marker-' .. graphics_change,
-            target = current_entity[1],
+            target = current_entity[5],
             surface = surface,
             only_in_alt_mode = true,
             players = {player_index}
         }
         all_markers[markers_made] = new_marker
-        all_entities_marked[unit_number] = true
+        all_entities_marked[unit_number] = new_marker
     end
 
     local function get_directions_splitter(current_entity)
@@ -419,13 +424,13 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local new_marker =
             create_sprite {
             sprite = map_direction[current_entity[4]] .. '-' .. graphics_change,
-            target = current_entity[1],
+            target = current_entity[5],
             surface = surface,
             only_in_alt_mode = true,
             players = {player_index}
         }
         all_markers[markers_made] = new_marker
-        all_entities_marked[unit_number] = true
+        all_entities_marked[unit_number] = new_marker
     end
 
     local function cache_forward_ug_belt_connector(entity, entity_unit_number, entity_position, entity_type, entity_direction, belt_to_ground_direction, previous_entity_unit_number, previous_entity_direction, previous_entity_input_side)
@@ -577,7 +582,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     end
                 end
             elseif entity_type == 'transport-belt' then
-                --? Splitter handling
+                --? Transport belt handling
                 local forward_position = Position(entity_position):translate(entity_direction, 1)
                 local forward_entity = read_forward_belt(forward_position)
                 if forward_entity then
@@ -1007,7 +1012,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     entity,
                     belt_to_ground_direction
                 }
-                belts_read = belts_read + 1
+                belts_read = belts_read + 1.5
             end
             read_entity_data[entity_unit_number] = current_entity
             --rendering.draw_text{text = belts_read, surface = surface, color = {1,0,1,1}, target = entity_position}
@@ -1182,12 +1187,9 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     for unit_number, current_entity in pairs(read_entity_data) do
         if not all_entities_marked[unit_number] then
             if current_entity[3] == 'underground-belt' and current_entity[6] == 'input' and current_entity[2].ug_output_target then
-                local start_position = current_entity[1]
                 local neighbour_entity_data = read_entity_data[current_entity[2].ug_output_target]
-                local end_position = neighbour_entity_data[1]
                 mark_ug_belt(unit_number, current_entity)
-                mark_ug_segment(start_position, end_position, current_entity[4])
-                all_entities_marked[unit_number] = true
+                mark_ug_segment(current_entity, neighbour_entity_data)
             elseif current_entity[3] == 'transport-belt' then
                 mark_belt(unit_number, current_entity)
             elseif current_entity[3] == 'splitter' then
@@ -1220,19 +1222,11 @@ local function highlight_scheduler()
     end
     if not next(global.marking_players) then
         global.marking = false
-        game.print(global.total_belts_marked)
     end
     if global.marking and global.belts_marked_this_tick < max_belts then
         return highlight_scheduler()
     end
 end
-local function tablelength(T)
-    local count = 0
-    if T then
-        for _ in pairs(T) do count = count + 1 end
-        return count
-    end
-  end
 
 local function max_belts_handler()
     if global.marking then
@@ -1240,14 +1234,8 @@ local function max_belts_handler()
         highlight_scheduler()
     else
         global.belts_marked_this_tick = 0
-        Event.remove(defines.events.on_tick, max_belts_handler)
-        local _,pdata = Player.get(1)
-        if pdata.current_beltnet_table and next(pdata.current_beltnet_table) then
-            local p = game.create_profiler()
-            game.print(tablelength(pdata.current_beltnet_table))
-            game.print(p)
-            p = nil
-        end
+        global.marking = false
+        remote.call("PickerAtheneum","queue_remove","PickerBeltTools","max_belts_handler")
     end
 end
 
@@ -1273,9 +1261,11 @@ local function check_selection(event)
                         pdata.scheduled_markers = nil
                     end
                     global.total_belts_marked = 0
+                    global.belts_marked_this_tick = 0
+
                     highlight_belts(selection, event.player_index, true, true)
                     if global.marking then
-                        Event.register(defines.events.on_tick, max_belts_handler, nil, nil, options)
+                        remote.call("PickerAtheneum","queue_add","PickerBeltTools","max_belts_handler")
                     end
                 end
             else
@@ -1326,10 +1316,6 @@ local function on_player_created(event)
 end
 Event.register(defines.events.on_player_created, on_player_created)
 
-Event.on_load(
-    function()
-        if global.marking then
-            Event.register(defines.events.on_tick, max_belts_handler, nil, nil, options)
-        end
-    end
-)
+Interface['max_belts_handler'] = function()
+    max_belts_handler()
+end

@@ -6,6 +6,7 @@ require('__stdlib__/stdlib/event/force').register_events(true)
 require('scripts/belt-brush')
 require('scripts/belt-reverser')
 require('scripts/belt-highlight')
+--require('scripts/belt-highlight/belt-highlight')
 require('scripts/auto-circuit')
 --)) Load Scripts ((--
 

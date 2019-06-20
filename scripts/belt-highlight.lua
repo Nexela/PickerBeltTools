@@ -10,11 +10,6 @@ local Position = require('__stdlib__/stdlib/area/position')
 local Direction = require('__stdlib__/stdlib/area/direction')
 local Interface = require('__stdlib__/stdlib/scripts/interface')
 
-local options = {
-    protected_mode = false,
-    skip_valid = true
-}
-
 local protected = {
     protected_mode = Event.options.protected_mode,
     skip_valid = true

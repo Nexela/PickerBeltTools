@@ -336,7 +336,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local new_marker =
             create_sprite {
             sprite = 'picker-ug-belt-marker-' .. graphics_change,
-            target = current_entity[1],
+            target = current_entity[5],
             surface = surface,
             only_in_alt_mode = true,
             players = {player_index}
@@ -345,8 +345,23 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         all_entities_marked[unit_number] = new_marker
     end
 
-    local function mark_ug_segment(start_position, end_position, entity_direction)
-        local ug_marker = ug_marker_table[entity_direction]
+    local function mark_ug_segment(current_entity, neighbour_entity)
+        local ug_marker = ug_marker_table[current_entity[4]]
+        markers_made = markers_made + 1
+        all_markers[markers_made] =
+            create_line{
+                color = {r = 1, g = 1, b = 0, a = 1},
+                width = 3,
+                gap_length = 0.5,
+                dash_length = 0.5,
+                from = current_entity[5],
+                from_offset = ug_marker.left,
+                to = neighbour_entity[5],
+                to_offset = ug_marker.rev_left,
+                surface = surface,
+                only_in_alt_mode = true,
+                players = {player_index}
+            }
         markers_made = markers_made + 1
         all_markers[markers_made] =
             create_line {
@@ -354,21 +369,10 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             width = 3,
             gap_length = 0.5,
             dash_length = 0.5,
-            from = start_position + ug_marker.left,
-            to = end_position + ug_marker.rev_left,
-            surface = surface,
-            only_in_alt_mode = true,
-            players = {player_index}
-        }
-        markers_made = markers_made + 1
-        all_markers[markers_made] =
-            create_line {
-            color = {r = 1, g = 1, b = 0, a = 1},
-            width = 3,
-            gap_length = 0.5,
-            dash_length = 0.5,
-            from = start_position + ug_marker.right,
-            to = end_position + ug_marker.rev_right,
+            from = current_entity[5],
+            from_offset = ug_marker.right,
+            to = neighbour_entity[5],
+            to_offset = ug_marker.rev_right,
             surface = surface,
             only_in_alt_mode = true,
             players = {player_index}
@@ -395,7 +399,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local new_marker =
             create_sprite {
             sprite = 'picker-belt-marker-' .. graphics_change,
-            target = current_entity[1],
+            target = current_entity[5],
             surface = surface,
             only_in_alt_mode = true,
             players = {player_index}
@@ -420,7 +424,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local new_marker =
             create_sprite {
             sprite = map_direction[current_entity[4]] .. '-' .. graphics_change,
-            target = current_entity[1],
+            target = current_entity[5],
             surface = surface,
             only_in_alt_mode = true,
             players = {player_index}
@@ -1183,11 +1187,9 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     for unit_number, current_entity in pairs(read_entity_data) do
         if not all_entities_marked[unit_number] then
             if current_entity[3] == 'underground-belt' and current_entity[6] == 'input' and current_entity[2].ug_output_target then
-                local start_position = current_entity[1]
                 local neighbour_entity_data = read_entity_data[current_entity[2].ug_output_target]
-                local end_position = neighbour_entity_data[1]
                 mark_ug_belt(unit_number, current_entity)
-                mark_ug_segment(start_position, end_position, current_entity[4])
+                mark_ug_segment(current_entity, neighbour_entity_data)
             elseif current_entity[3] == 'transport-belt' then
                 mark_belt(unit_number, current_entity)
             elseif current_entity[3] == 'splitter' then

@@ -13,7 +13,7 @@ Data {
     action = 'lua',
     toggleable = true,
     icon = {
-        filename = '__base__/graphics/icons/transport-belt.png',
+        filename = '__PickerBeltTools__/graphics/icons/belt-marker-shortcut.png',
         priority = 'extra-high-no-scale',
         size = 32,
         scale = 1,

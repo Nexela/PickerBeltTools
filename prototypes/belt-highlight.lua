@@ -13,7 +13,7 @@ Data {
     action = 'lua',
     toggleable = true,
     icon = {
-        filename = '__PickerBeltTools__/graphics/icons/belt-marker-shortcut.png',
+        filename = '__PickerAtheneum__/graphics/icons/belt-marker-shortcut.png',
         priority = 'extra-high-no-scale',
         size = 32,
         scale = 1,
@@ -122,7 +122,7 @@ do
                     {
                         width = 64,
                         height = 64,
-                        x = 0,
+                        x = 256,
                         scale = 0.5,
                         filename = '__core__/graphics/cursor-boxes-32x32.png'
                     }

@@ -11,7 +11,7 @@ local Direction = require('__stdlib__/stdlib/area/direction')
 local Interface = require('__stdlib__/stdlib/scripts/interface')
 
 local tables = require('scripts/belt-highlight/tables')
-local max_belts = settings.global['picker-max-renders-tick'].value
+local MAX_BELTS = settings.global['picker-max-renders-tick'].value
 
 local op_dir = Direction.opposite_direction
 local draw_sprite = rendering.draw_sprite
@@ -704,7 +704,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                         entity_neighbours.ug_output_target = ug_neighbour_unit_number
                         if not all_entities_marked[ug_neighbour_unit_number] then
                             if not read_entity_data[ug_neighbour_unit_number] then
-                                if belts_read < max_belts then
+                                if belts_read < MAX_BELTS then
                                     return step_forward(ug_neighbour, ug_neighbour_unit_number, ug_neighbour_position, ug_neighbour_type, ug_neighbour_direction, 'output', entity_unit_number, entity_direction, nil)
                                 else
                                     global.marking = true
@@ -751,7 +751,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                             end
                             if not all_entities_marked[forward_entity_unit_number] then
                                 if not read_entity_data[forward_entity_unit_number] then
-                                    if belts_read < max_belts then
+                                    if belts_read < MAX_BELTS then
                                         return step_forward(forward_entity, forward_entity_unit_number, forward_position, forward_entity_type, forward_entity_direction, forward_entity_type == 'belt-to-ground' and forward_entity.belt_to_ground_type or nil, entity_unit_number, entity_direction, splitter_input_side)
                                     else
                                         --cache_forward_ug_belt_connector(forward_entity, forward_entity_unit_number, forward_position, forward_entity_type, forward_entity_direction, nil, entity_unit_number, entity_direction, splitter_input_side)
@@ -801,7 +801,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                         end
                         if not all_entities_marked[forward_entity_unit_number] then
                             if not read_entity_data[forward_entity_unit_number] then
-                                if belts_read < max_belts then
+                                if belts_read < MAX_BELTS then
                                     return step_forward(forward_entity, forward_entity_unit_number, forward_position, forward_entity_type, forward_entity_direction, forward_entity_type == 'belt-to-ground' and forward_entity.belt_to_ground_type or nil, entity_unit_number, entity_direction, splitter_input_side)
                                 else
                                     --cache_forward_ug_belt_connector(forward_entity, forward_entity_unit_number, forward_position, forward_entity_type, forward_entity_direction, nil, entity_unit_number, entity_direction, splitter_input_side)
@@ -849,7 +849,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                         end
                         if not all_entities_marked[left_entity_unit_number] then
                             if not read_entity_data[left_entity_unit_number] then
-                                if belts_read < max_belts then
+                                if belts_read < MAX_BELTS then
                                     if forward_entities.right_entity.entity then
                                         step_forward(forward_entities.left_entity.entity, left_entity_unit_number, left_entity_position, left_entity_type, left_entity_direction, nil, entity_unit_number, entity_direction, splitter_input_side)
                                     else
@@ -899,7 +899,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                         end
                         if not all_entities_marked[right_entity_unit_number] then
                             if not read_entity_data[right_entity_unit_number] then
-                                if belts_read < max_belts then
+                                if belts_read < MAX_BELTS then
                                     return step_forward(forward_entities.right_entity.entity, right_entity_unit_number, right_entity_position, right_entity_type, right_entity_direction, nil, entity_unit_number, entity_direction, splitter_input_side)
                                 else
                                     --cache_forward_ug_belt_connector(forward_entities.right_entity.entity, right_entity_unit_number, right_entity_position, right_entity_type, right_entity_direction, nil, entity_unit_number, entity_direction, splitter_input_side)
@@ -987,7 +987,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 end
                 if not all_entities_marked[neighbour_unit_number] then
                     if not read_entity_data[neighbour_unit_number] then
-                        if belts_read < max_belts then
+                        if belts_read < MAX_BELTS then
                             return step_backward(neighbour[5], neighbour_unit_number, neighbour_position, neighbour_type, neighbour_direction, neighbour.belt_to_ground_direction, entity_unit_number, splitter_output_side)
                         else
                             --mark_scheduled_point(entity_unit_number, current_entity)
@@ -1009,7 +1009,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                         if neighbour_type ~= 'splitter' then
                             read_entity_data[neighbour_unit_number][2].output_target = entity_unit_number
                         else
-                            read_entity_data[neighbour_unit_number][2][splitter_output_side] = entity_unit_number
+                            read_entity_data[neighbour_unit_number][2][splitter_output_side .. "_output_target"] = entity_unit_number
                         end
                     end
                 else
@@ -1022,7 +1022,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 entity_neighbours['left_output_target'] = previous_entity_unit_number
                 entity_neighbours['right_output_target'] = previous_entity_unit_number
             elseif previous_entity_output_side then
-                entity_neighbours[previous_entity_output_side] = previous_entity_unit_number
+                entity_neighbours[previous_entity_output_side .. "_output_target"] = previous_entity_unit_number
             else
                 if previous_entity_unit_number then
                     if belt_to_ground_direction ~= 'input' and not entity_neighbours.output_target then
@@ -1062,7 +1062,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                         entity_neighbours.ug_input = ug_neighbour_unit_number
                         if not all_entities_marked[ug_neighbour_unit_number] then
                             if not read_entity_data[ug_neighbour_unit_number] then
-                                if belts_read < max_belts then
+                                if belts_read < MAX_BELTS then
                                     step_backward(ug_neighbour, ug_neighbour_unit_number, ug_neighbour_position, ug_neighbour_type, ug_neighbour_direction, 'input', entity_unit_number)
                                 else
                                     global.marking = true
@@ -1139,7 +1139,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     end
                     if not all_entities_marked[neighbour_unit_number] then
                         if not read_entity_data[neighbour_unit_number] then
-                            if belts_read < max_belts then
+                            if belts_read < MAX_BELTS then
                                 if neighbours.right_feed_entity_data then
                                     step_backward(neighbour[5], neighbour_unit_number, neighbour_position, neighbour_type, neighbour_direction, neighbour.belt_to_ground_direction, entity_unit_number, splitter_output_side)
                                 else
@@ -1165,7 +1165,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                             if neighbour_type ~= 'splitter' then
                                 read_entity_data[neighbour_unit_number][2].output_target = entity_unit_number
                             else
-                                read_entity_data[neighbour_unit_number][2][splitter_output_side] = entity_unit_number
+                                read_entity_data[neighbour_unit_number][2][splitter_output_side .. "_output_target"] = entity_unit_number
                             end
                         end
                     else
@@ -1185,7 +1185,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     end
                     if not all_entities_marked[neighbour_unit_number] then
                         if not read_entity_data[neighbour_unit_number] then
-                            if belts_read < max_belts then
+                            if belts_read < MAX_BELTS then
                                 return step_backward(neighbour[5], neighbour_unit_number, neighbour_position, neighbour_type, neighbour_direction, neighbour.belt_to_ground_direction, entity_unit_number, splitter_output_side)
                             else
                                 --mark_scheduled_point(entity_unit_number, current_entity)
@@ -1207,7 +1207,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                             if neighbour_type ~= 'splitter' then
                                 read_entity_data[neighbour_unit_number][2].output_target = entity_unit_number
                             else
-                                read_entity_data[neighbour_unit_number][2][splitter_output_side] = entity_unit_number
+                                read_entity_data[neighbour_unit_number][2][splitter_output_side .. "_output_target"] = entity_unit_number
                             end
                         end
                     else
@@ -1262,7 +1262,7 @@ local function highlight_scheduler()
     if not next(global.marking_players) then
         global.marking = false
     end
-    if global.marking and global.belts_marked_this_tick < max_belts then
+    if global.marking and global.belts_marked_this_tick < MAX_BELTS then
         return highlight_scheduler()
     end
 end
@@ -1342,7 +1342,7 @@ Event.register(defines.events.on_player_created, on_player_created)
 
 local function on_runtime_mod_setting_changed(event)
     if event.setting == 'picker-max-renders-tick' then
-        max_belts = settings.global['picker-max-renders-tick'].value
+        MAX_BELTS = settings.global['picker-max-renders-tick'].value
     end
 end
 Event.register(defines.events.on_runtime_mod_setting_changed, on_runtime_mod_setting_changed)

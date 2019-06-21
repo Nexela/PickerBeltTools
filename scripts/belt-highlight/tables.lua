@@ -6,6 +6,7 @@ tables.tick_options = {
     skip_valid = true,
     protected_mode = false
 }
+
 tables.protected = {
     protected_mode = Event.options.protected_mode,
     skip_valid = true

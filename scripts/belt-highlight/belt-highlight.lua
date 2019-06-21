@@ -12,6 +12,7 @@ local Interface = require('__stdlib__/stdlib/scripts/interface')
 
 local tables = require('scripts/belt-highlight/tables')
 local max_belts = settings.global['picker-max-renders-tick'].value
+local ug_search_radius = settings.global['picker-underground-search-radius'].value
 
 local op_dir = Direction.opposite_direction
 local draw_sprite = rendering.draw_sprite
@@ -29,16 +30,17 @@ local function show_underground_sprites(event)
     --? Assign working table reference to global reference under player
     pdata.current_underground_marker_table = all_markers
 
-    local max_distance = settings.global['picker-underground-search-radius'].value
-    local alpha = settings.get_player_settings(player)['picker-belt-arrows-alpha'].value / 100
+    local player_settings = player.mod_settings
+    local alpha = player_settings['picker-belt-marker-alpha'].value / 100
     local player_color_pref = {
-        alpha * settings.get_player_settings(player)['picker-belt-arrows-red'].value / 100,
-        alpha * settings.get_player_settings(player)['picker-belt-arrows-green'].value / 100,
-        alpha * settings.get_player_settings(player)['picker-belt-arrows-blue'].value / 100,
+        alpha * player_settings['picker-belt-marker-red'].value / 100,
+        alpha * player_settings['picker-belt-marker-green'].value / 100,
+        alpha * player_settings['picker-belt-marker-blue'].value / 100,
         alpha
     }
+
     local filter = {
-        area = {{player.position.x - max_distance, player.position.y - max_distance}, {player.position.x + max_distance, player.position.y + max_distance}},
+        area = {Position(player.position):expand_to_area(ug_search_radius)},
         type = {'underground-belt'},
         force = player.force
     }
@@ -147,11 +149,11 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     --local belts_read = 0
     local markers_made = next(all_markers) and #all_markers or 0
     local player_settings = player.mod_settings
-    local alpha = player_settings['picker-belt-arrows-alpha'].value / 100
+    local alpha = player_settings['picker-belt-marker-alpha'].value / 100
     local player_color_pref = {
-        alpha * player_settings['picker-belt-arrows-red'].value / 100,
-        alpha * player_settings['picker-belt-arrows-green'].value / 100,
-        alpha * player_settings['picker-belt-arrows-blue'].value / 100,
+        alpha * player_settings['picker-belt-marker-red'].value / 100,
+        alpha * player_settings['picker-belt-marker-green'].value / 100,
+        alpha * player_settings['picker-belt-marker-blue'].value / 100,
         alpha
     }
 
@@ -1353,7 +1355,7 @@ end
 
 local function on_load()
     Event.render_id = remote.call('PickerAtheneum', 'generate_event_name', 'max_belts_handler')
-    Event.derender_id = remote.call('PickerAtheneum', 'generate_event_name', 'derenderer')
+    Event.derender_id = remote.call('PickerAtheneum', 'generate_event_name', 'render_remover')
     Event.register(Event.render_id, max_belts_handler, nil, nil, tables.tick_options)
     Event.register(Event.derender_id, max_belts_handler, nil, nil, tables.tick_options)
 end

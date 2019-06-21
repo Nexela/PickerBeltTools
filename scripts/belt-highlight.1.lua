@@ -10,13 +10,88 @@ local Position = require('__stdlib__/stdlib/area/position')
 local Direction = require('__stdlib__/stdlib/area/direction')
 local Interface = require('__stdlib__/stdlib/scripts/interface')
 
-local tables = require('scripts/belt-highlight/tables')
-local max_belts = settings.global['picker-max-renders-tick'].value
+local protected = {
+    protected_mode = Event.options.protected_mode,
+    skip_valid = true
+}
 
 local op_dir = Direction.opposite_direction
-local draw_sprite = rendering.draw_sprite
-local draw_line = rendering.draw_line
-local destroy = rendering.destroy
+local max_belts = 5
+local empty = {}
+local create_sprite = _G.rendering.draw_sprite
+local create_line = _G.rendering.draw_line
+
+local map_direction = {
+    [0] = 'picker-splitter-marker-north',
+    [2] = 'picker-splitter-marker-east',
+    [4] = 'picker-splitter-marker-south',
+    [6] = 'picker-splitter-marker-west'
+}
+
+local marker_entry = {
+    [0] = 1,
+    [1] = 2,
+    [4] = 3,
+    [5] = 4,
+    [16] = 5,
+    [17] = 6,
+    [20] = 7,
+    [21] = 8,
+    [64] = 9,
+    [65] = 10,
+    [68] = 11,
+    [69] = 12,
+    [80] = 13,
+    [81] = 14,
+    [84] = 15,
+    [85] = 16
+}
+
+local bitwise_marker_entry = {
+    [0x00] = 1,
+    [0x01] = 2,
+    [0x04] = 3,
+    [0x05] = 4,
+    [0x10] = 5,
+    [0x11] = 6,
+    [0x14] = 7,
+    [0x15] = 8,
+    [0x40] = 9,
+    [0x41] = 10,
+    [0x44] = 11,
+    [0x45] = 12,
+    [0x50] = 13,
+    [0x51] = 14,
+    [0x54] = 15,
+    [0x55] = 16
+}
+
+local ug_marker_table = {
+    [defines.direction.north] = {
+        left = Position({x = -0.4, y = -0.75}),
+        right = Position({x = 0.4, y = -0.75}),
+        rev_left = Position({x = -0.4, y = 0.75}),
+        rev_right = Position({x = 0.4, y = 0.75})
+    },
+    [defines.direction.east] = {
+        left = Position({x = 0.75, y = -0.4}),
+        right = Position({x = 0.75, y = 0.4}),
+        rev_left = Position({x = -0.75, y = -0.4}),
+        rev_right = Position({x = -0.75, y = 0.4})
+    },
+    [defines.direction.south] = {
+        left = Position({x = 0.4, y = 0.75}),
+        right = Position({x = -0.4, y = 0.75}),
+        rev_left = Position({x = 0.4, y = -0.75}),
+        rev_right = Position({x = -0.4, y = -0.75})
+    },
+    [defines.direction.west] = {
+        left = Position({x = -0.75, y = 0.4}),
+        right = Position({x = -0.75, y = -0.4}),
+        rev_left = Position({x = 0.75, y = 0.4}),
+        rev_right = Position({x = 0.75, y = -0.4})
+    }
+}
 
 local function show_underground_sprites(event)
     local player, pdata = Player.get(event.player_index)
@@ -30,13 +105,7 @@ local function show_underground_sprites(event)
     pdata.current_underground_marker_table = all_markers
 
     local max_distance = settings.global['picker-underground-search-radius'].value
-    local alpha = settings.get_player_settings(player)['picker-belt-arrows-alpha'].value / 100
-    local player_color_pref = {
-        alpha * settings.get_player_settings(player)['picker-belt-arrows-red'].value / 100,
-        alpha * settings.get_player_settings(player)['picker-belt-arrows-green'].value / 100,
-        alpha * settings.get_player_settings(player)['picker-belt-arrows-blue'].value / 100,
-        alpha
-    }
+
     local filter = {
         area = {{player.position.x - max_distance, player.position.y - max_distance}, {player.position.x + max_distance, player.position.y + max_distance}},
         type = {'underground-belt'},
@@ -61,19 +130,21 @@ local function show_underground_sprites(event)
         if entity_data[2] then
             markers_made = markers_made + 1
             all_markers[markers_made] =
-                draw_sprite {
+            create_sprite {
                 sprite = 'picker-belt-marker-box-good',
                 target = entity_data[1],
                 surface = surface,
+                only_in_alt_mode = true,
                 players = {player}
             }
         else
             markers_made = markers_made + 1
             all_markers[markers_made] =
-                draw_sprite {
+            create_sprite {
                 sprite = 'picker-belt-marker-box-bad',
                 target = entity_data[1],
                 surface = surface,
+                only_in_alt_mode = true,
                 players = {player}
             }
         end
@@ -84,29 +155,31 @@ local function show_underground_sprites(event)
                 if entity_data[3] == 'input' then
                     local start_position = entity_data[1]
                     local end_position = neighbour_data[1]
-                    local ug_marker = tables.ug_offsets[entity_data[4]]
+                    local ug_marker = ug_marker_table[entity_data[4]]
                     markers_made = markers_made + 1
                     all_markers[markers_made] =
-                        draw_line {
-                        color = player_color_pref,
+                        create_line {
+                        color = {r = 1, g = 1, b = 0, a = 1},
                         width = 3,
                         gap_length = 0.5,
                         dash_length = 0.5,
                         from = start_position + ug_marker.left,
                         to = end_position + ug_marker.rev_left,
                         surface = surface,
+                        only_in_alt_mode = true,
                         players = {event.player_index}
                     }
                     markers_made = markers_made + 1
                     all_markers[markers_made] =
-                        draw_line {
-                        color = player_color_pref,
+                        create_line {
+                        color = {r = 1, g = 1, b = 0, a = 1},
                         width = 3,
                         gap_length = 0.5,
                         dash_length = 0.5,
                         from = start_position + ug_marker.right,
                         to = end_position + ug_marker.rev_right,
                         surface = surface,
+                        only_in_alt_mode = true,
                         players = {event.player_index}
                     }
                     all_entities_marked[unit_number] = true
@@ -117,7 +190,8 @@ local function show_underground_sprites(event)
 end
 
 local function destroy_markers(markers)
-    for _, mark in pairs(markers or tables.empty) do
+    local destroy = _G.rendering.destroy
+    for _, mark in pairs(markers or empty) do
         destroy(mark)
     end
 end
@@ -134,6 +208,31 @@ local function highlight_underground(event)
 end
 Event.register('picker-show-underground-belt-paths', highlight_underground)
 
+local allowed_types = {
+    ['underground-belt'] = true,
+    ['transport-belt'] = true,
+    ['splitter'] = true
+}
+
+local splitter_check_table = {
+    [defines.direction.north] = {
+        left = Position({x = -0.5, y = -1}),
+        right = Position({x = 0.5, y = -1})
+    },
+    [defines.direction.east] = {
+        left = Position({x = 1, y = -0.5}),
+        right = Position({x = 1, y = 0.5})
+    },
+    [defines.direction.south] = {
+        left = Position({x = 0.5, y = 1}),
+        right = Position({x = -0.5, y = 1})
+    },
+    [defines.direction.west] = {
+        left = Position({x = -1, y = 0.5}),
+        right = Position({x = -1, y = -0.5})
+    }
+}
+
 local bor = bit32.bor
 local lshift = bit32.lshift
 local function highlight_belts(selected_entity, player_index, forward, backward, stitch_data)
@@ -146,14 +245,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     local belts_read = 0
     --local belts_read = 0
     local markers_made = next(all_markers) and #all_markers or 0
-    local player_settings = player.mod_settings
-    local alpha = player_settings['picker-belt-arrows-alpha'].value / 100
-    local player_color_pref = {
-        alpha * player_settings['picker-belt-arrows-red'].value / 100,
-        alpha * player_settings['picker-belt-arrows-green'].value / 100,
-        alpha * player_settings['picker-belt-arrows-blue'].value / 100,
-        alpha
-    }
 
     --? Assign working table references to global reference under player
     pdata.current_marker_table = all_markers
@@ -182,7 +273,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
 
     -- TODO Make two individual point checks and return two entry table
     local function read_forward_splitter(entity_position, entity_direction)
-        local shift_directions = tables.splitter_offsets[entity_direction]
+        local shift_directions = splitter_check_table[entity_direction]
         local left_pos = entity_position + shift_directions.left
         local right_pos = entity_position + shift_directions.right
         return {
@@ -207,35 +298,17 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         }
     end
 
-    local function get_splitter_input_side(current_entity, entity_direction, splitter_position, reverse)
-        local delta_x = current_entity[1].x - splitter_position.x
-        local delta_y = current_entity[1].y - splitter_position.y
-        if current_entity[3] == 'splitter' and (delta_x == 0 or delta_y == 0) then
-            return 'both'
-        elseif entity_direction == defines.direction.north then
-            if reverse then
-                return delta_x < 0 and 'right' or 'left'
-            else
-                return delta_x < 0 and 'left' or 'right'
-            end
+    local function get_splitter_input_side(entity_position, entity_direction, splitter_position)
+        local delta_x = entity_position.x - splitter_position.x
+        local delta_y = entity_position.y - splitter_position.y
+        if entity_direction == defines.direction.north then
+            return delta_x < 0 and 'left' or 'right'
         elseif entity_direction == defines.direction.east then
-            if reverse then
-                return delta_y < 0 and 'right' or 'left'
-            else
-                return delta_y < 0 and 'left' or 'right'
-            end
+            return delta_y < 0 and 'left' or 'right'
         elseif entity_direction == defines.direction.south then
-            if reverse then
-                return delta_x < 0 and 'left' or 'right'
-            else
-                return delta_x < 0 and 'right' or 'left'
-            end
+            return delta_x < 0 and 'right' or 'left'
         elseif entity_direction == defines.direction.west then
-            if reverse then
-                return delta_y < 0 and 'left' or 'right'
-            else
-                return delta_y < 0 and 'right' or 'left'
-            end
+            return delta_y < 0 and 'right' or 'left'
         end
     end
 
@@ -245,7 +318,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         table_entry = current_entity[2].output_target and bor(table_entry, lshift(1, 0)) or table_entry
         if entity_neighbours.input then
             for _, direction_data in pairs(entity_neighbours.input) do
-                table_entry = bor(table_entry, lshift(1, op_dir((direction_data[2] - current_entity[4]) % 8)))
+                table_entry = bor(table_entry, lshift(1, op_dir((direction_data[2] - current_entity[4])%8)))
             end
         end
         return table_entry
@@ -253,14 +326,15 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
 
     local function mark_ug_belt(unit_number, current_entity)
         markers_made = markers_made + 1
-        local graphics_change = tables.marker_entry[get_directions_ug_belt(current_entity)]
+        local map_dir = current_entity[4] / 2
+        local graphics_change = marker_entry[get_directions_ug_belt(current_entity)]
         local new_marker =
-            draw_sprite {
+            create_sprite {
             sprite = 'picker-ug-belt-marker-' .. graphics_change,
-            tint = player_color_pref,
             target = current_entity[5],
             orientation = Direction.direction_to_orientation(current_entity[4]),
             surface = surface,
+            only_in_alt_mode = true,
             players = {player_index}
         }
         all_markers[markers_made] = new_marker
@@ -268,25 +342,26 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     end
 
     local function mark_ug_segment(current_entity, neighbour_entity)
-        local ug_marker = tables.ug_offsets[current_entity[4]]
+        local ug_marker = ug_marker_table[current_entity[4]]
         markers_made = markers_made + 1
         all_markers[markers_made] =
-            draw_line {
-            color = player_color_pref,
-            width = 3,
-            gap_length = 0.5,
-            dash_length = 0.5,
-            from = current_entity[5],
-            from_offset = ug_marker.left,
-            to = neighbour_entity,
-            to_offset = ug_marker.rev_left,
-            surface = surface,
-            players = {player_index}
-        }
+            create_line{
+                color = {r = 1, g = 1, b = 0, a = 1},
+                width = 3,
+                gap_length = 0.5,
+                dash_length = 0.5,
+                from = current_entity[5],
+                from_offset = ug_marker.left,
+                to = neighbour_entity,
+                to_offset = ug_marker.rev_left,
+                surface = surface,
+                only_in_alt_mode = true,
+                players = {player_index}
+            }
         markers_made = markers_made + 1
         all_markers[markers_made] =
-            draw_line {
-            color = player_color_pref,
+            create_line {
+            color = {r = 1, g = 1, b = 0, a = 1},
             width = 3,
             gap_length = 0.5,
             dash_length = 0.5,
@@ -295,6 +370,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             to = neighbour_entity,
             to_offset = ug_marker.rev_right,
             surface = surface,
+            only_in_alt_mode = true,
             players = {player_index}
         }
     end
@@ -305,7 +381,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local entity_neighbours = current_entity[2]
         if entity_neighbours.input then
             for _, direction_data in pairs(entity_neighbours.input) do
-                table_entry = bor(table_entry, lshift(1, op_dir((direction_data[2] - current_entity[4]) % 8)))
+                table_entry = bor(table_entry, lshift(1, op_dir((direction_data[2] - current_entity[4])%8)))
             end
         end
         table_entry = current_entity[2].output_target and bor(table_entry, lshift(1, 0)) or table_entry
@@ -314,14 +390,15 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
 
     local function mark_belt(unit_number, current_entity)
         markers_made = markers_made + 1
-        local graphics_change = tables.bitwise_marker_entry[get_directions_belt(current_entity)]
+        local map_dir = current_entity[4] / 2
+        local graphics_change = bitwise_marker_entry[get_directions_belt(current_entity)]
         local new_marker =
-            draw_sprite {
+            create_sprite {
             sprite = 'picker-belt-marker-' .. graphics_change,
-            tint = player_color_pref,
             orientation = Direction.direction_to_orientation(current_entity[4]),
             target = current_entity[5],
             surface = surface,
+            only_in_alt_mode = true,
             players = {player_index}
         }
         all_markers[markers_made] = new_marker
@@ -340,299 +417,23 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
 
     local function mark_splitter(unit_number, current_entity)
         markers_made = markers_made + 1
-        local graphics_change = tables.bitwise_marker_entry[get_directions_splitter(current_entity)]
+        local graphics_change = bitwise_marker_entry[get_directions_splitter(current_entity)]
         local new_marker =
-            draw_sprite {
-            sprite = 'picker-splitter-markers-' .. graphics_change,
-            tint = player_color_pref,
+            create_sprite {
+            sprite = map_direction[0] .. '-' .. graphics_change,
             target = current_entity[5],
             orientation = Direction.direction_to_orientation(current_entity[4]),
             surface = surface,
+            only_in_alt_mode = true,
             players = {player_index}
         }
         all_markers[markers_made] = new_marker
         all_entities_marked[unit_number] = new_marker
     end
 
-    local function read_backward_belt(current_entity)
-        local left_feed_direction_check = (current_entity[4] + 6) % 8
-        local rear_feed_direction_check = op_dir(current_entity[4])
-        local right_feed_direction_check = (current_entity[4] + 2) % 8
-        local left_feed_position = Position(current_entity[1]):translate(left_feed_direction_check, 1)
-        local rear_feed_position = Position(current_entity[1]):translate(rear_feed_direction_check, 1)
-        local right_feed_position = Position(current_entity[1]):translate(right_feed_direction_check, 1)
-        local left_feed_entity =
-            find_belt(
-            {
-                position = left_feed_position,
-                type = {'transport-belt', 'underground-belt', 'splitter'}
-            }
-        )[1]
-        local rear_feed_entity =
-            find_belt(
-            {
-                position = rear_feed_position,
-                type = {'transport-belt', 'underground-belt', 'splitter'}
-            }
-        )[1]
-        local right_feed_entity =
-            find_belt(
-            {
-                position = right_feed_position,
-                type = {'transport-belt', 'underground-belt', 'splitter'}
-            }
-        )[1]
-        local backstep_data = {}
-        local left_feed_direction = left_feed_entity and left_feed_entity.direction or nil
-        local rear_feed_direction = rear_feed_entity and rear_feed_entity.direction or nil
-        local right_feed_direction = right_feed_entity and right_feed_entity.direction or nil
-        if left_feed_direction and left_feed_direction == op_dir(left_feed_direction_check) then
-            local left_feed_type = left_feed_entity.type
-            local belt_to_ground_direction = left_feed_type == 'underground-belt' and left_feed_entity.belt_to_ground_type
-            if belt_to_ground_direction ~= 'input' then
-                backstep_data.left_feed_entity_data = {
-                    left_feed_position,
-                    {},
-                    left_feed_type,
-                    left_feed_direction,
-                    left_feed_entity,
-                    belt_to_ground_direction
-                }
-            end
-        end
-        if rear_feed_direction and rear_feed_direction == op_dir(rear_feed_direction_check) then
-            local rear_feed_type = rear_feed_entity.type
-            local belt_to_ground_direction = rear_feed_type == 'underground-belt' and rear_feed_entity.belt_to_ground_type
-            if belt_to_ground_direction ~= 'input' then
-                backstep_data.rear_feed_entity_data = {
-                    rear_feed_position,
-                    {},
-                    rear_feed_type,
-                    rear_feed_direction,
-                    rear_feed_entity,
-                    belt_to_ground_direction
-                }
-            end
-        end
-        if right_feed_direction and right_feed_direction == op_dir(right_feed_direction_check) then
-            local right_feed_type = right_feed_entity.type
-            local belt_to_ground_direction = right_feed_type == 'underground-belt' and right_feed_entity.belt_to_ground_type
-            if belt_to_ground_direction ~= 'input' then
-                backstep_data.right_feed_entity_data = {
-                    right_feed_position,
-                    {},
-                    right_feed_type,
-                    right_feed_direction,
-                    right_feed_entity,
-                    belt_to_ground_direction
-                }
-            end
-        end
-        return backstep_data
-    end
-
-    local function read_sideload_ug_belt(current_entity)
-        local left_feed_direction_check = (current_entity[4] + 6) % 8
-        local right_feed_direction_check = (current_entity[4] + 2) % 8
-        local left_feed_position = Position(current_entity[1]):translate(left_feed_direction_check, 1)
-        local right_feed_position = Position(current_entity[1]):translate(right_feed_direction_check, 1)
-        local left_feed_entity =
-            find_belt(
-            {
-                position = left_feed_position,
-                type = {'transport-belt', 'underground-belt', 'splitter'}
-            }
-        )[1]
-        local right_feed_entity =
-            find_belt(
-            {
-                position = right_feed_position,
-                type = {'transport-belt', 'underground-belt', 'splitter'}
-            }
-        )[1]
-        local backstep_data = {}
-        local left_feed_direction = left_feed_entity and left_feed_entity.direction or nil
-        local right_feed_direction = right_feed_entity and right_feed_entity.direction or nil
-        if left_feed_direction and left_feed_direction == op_dir(left_feed_direction_check) then
-            local left_feed_type = left_feed_entity.type
-            local belt_to_ground_direction = left_feed_type == 'underground-belt' and left_feed_entity.belt_to_ground_type
-            if belt_to_ground_direction ~= 'input' then
-                backstep_data.left_feed_entity_data = {
-                    left_feed_position,
-                    {},
-                    left_feed_type,
-                    left_feed_direction,
-                    left_feed_entity,
-                    belt_to_ground_direction
-                }
-            end
-        end
-        if right_feed_direction and right_feed_direction == op_dir(right_feed_direction_check) then
-            local right_feed_type = right_feed_entity.type
-            local belt_to_ground_direction = right_feed_type == 'underground-belt' and right_feed_entity.belt_to_ground_type
-            if belt_to_ground_direction ~= 'input' then
-                backstep_data.right_feed_entity_data = {
-                    right_feed_position,
-                    {},
-                    right_feed_type,
-                    right_feed_direction,
-                    right_feed_entity,
-                    belt_to_ground_direction
-                }
-            end
-        end
-        return backstep_data
-    end
-
-    local function read_backward_splitter(current_entity)
-        local shift_directions = tables.splitter_offsets[op_dir(current_entity[4])]
-        local left_feed_position = current_entity[1] + shift_directions.right
-        local right_feed_position = current_entity[1] + shift_directions.left
-        local left_feed_entity =
-            find_belt(
-            {
-                position = left_feed_position,
-                type = {'transport-belt', 'underground-belt', 'splitter'}
-            }
-        )[1]
-        local right_feed_entity =
-            find_belt(
-            {
-                position = right_feed_position,
-                type = {'transport-belt', 'underground-belt', 'splitter'}
-            }
-        )[1]
-        local backstep_data = {}
-        local left_feed_direction = left_feed_entity and left_feed_entity.direction or nil
-        local right_feed_direction = right_feed_entity and right_feed_entity.direction or nil
-        if left_feed_direction and left_feed_direction == current_entity[4] then
-            local left_feed_type = left_feed_entity.type
-            local belt_to_ground_direction = left_feed_type == 'underground-belt' and left_feed_entity.belt_to_ground_type
-            if belt_to_ground_direction ~= 'input' then
-                backstep_data.left_feed_entity_data = {
-                    left_feed_position,
-                    {},
-                    left_feed_type,
-                    left_feed_direction,
-                    left_feed_entity,
-                    belt_to_ground_direction
-                }
-            end
-        end
-        if right_feed_direction and right_feed_direction == current_entity[4] then
-            local right_feed_type = right_feed_entity.type
-            local belt_to_ground_direction = right_feed_type == 'underground-belt' and right_feed_entity.belt_to_ground_type
-            if belt_to_ground_direction ~= 'input' then
-                backstep_data.right_feed_entity_data = {
-                    right_feed_position,
-                    {},
-                    right_feed_type,
-                    right_feed_direction,
-                    right_feed_entity,
-                    belt_to_ground_direction
-                }
-            end
-        end
-        return backstep_data
-    end
-
-    local function update_marker(entity)
-        local unit_number = entity.unit_number
-        destroy(all_entities_marked[unit_number])
-        all_entities_marked[unit_number] = nil
-        local entity_type = entity.type
-        local entity_position = entity.position
-        local entity_direction = entity.direction
-        local belt_to_ground_direction = entity_type == 'underground-belt' and entity.belt_to_ground_type
-        local entity_neighbours = {}
-        local entity_unit_number = entity.unit_number
-        local current_entity = {
-            entity_position,
-            entity_neighbours,
-            entity_type,
-            entity_direction,
-            entity,
-            belt_to_ground_direction
-        }
-        read_entity_data[entity_unit_number] = current_entity
-        belts_read = belts_read + 1
-        if entity_type == 'transport-belt' then
-            local forward_position = Position(entity_position):translate(entity_direction, 1)
-            local forward_entity = read_forward_belt(forward_position)
-            if forward_entity then
-                local forward_entity_direction = forward_entity.direction
-                local forward_entity_type = forward_entity.type
-                if not (forward_entity_direction == op_dir(entity_direction)) and not (forward_entity_type == 'underground-belt' and forward_entity_direction == entity_direction and forward_entity.belt_to_ground_type == 'output') and not (forward_entity_type == 'splitter' and forward_entity_direction ~= entity_direction) then
-                    local forward_entity_unit_number = forward_entity.unit_number
-                    entity_neighbours.output_target = forward_entity_unit_number
-                end
-            end
-            local neighbours = read_backward_belt(current_entity)
-            for _, entities in pairs(neighbours) do
-                entity_neighbours.input = entity_neighbours.input and entity_neighbours.input or {}
-                entity_neighbours.input[#entity_neighbours.input + 1] = {entities[5].unit_number, entities[4]}
-            end
-        elseif entity_type == 'underground-belt' then
-            local ug_neighbour = entity.neighbours
-            local ug_belt_to_ground_type = entity.belt_to_ground_type
-            if ug_belt_to_ground_type == 'input' then
-                read_entity_data[entity_unit_number][6] = ug_belt_to_ground_type
-                if ug_neighbour then
-                    local ug_neighbour_unit_number = ug_neighbour.unit_number
-                    entity_neighbours.ug_output_target = ug_neighbour_unit_number
-                end
-            else
-                local forward_position = Position(entity_position):translate(entity_direction, 1)
-                local forward_entity = read_forward_belt(forward_position)
-                if forward_entity then
-                    local forward_entity_direction = forward_entity.direction
-                    local forward_entity_type = forward_entity.type
-                    if not (forward_entity_direction == op_dir(entity_direction)) and not (forward_entity_type == 'underground-belt' and forward_entity_direction == entity_direction and forward_entity.belt_to_ground_type == 'output') and not (forward_entity_type == 'splitter' and forward_entity_direction ~= entity_direction) then
-                        local forward_entity_unit_number = forward_entity.unit_number
-                        entity_neighbours.output_target = forward_entity_unit_number
-                    end
-                end
-                if ug_neighbour then
-                    local ug_neighbour_unit_number = ug_neighbour.unit_number
-                    entity_neighbours.ug_input = ug_neighbour_unit_number
-                end
-                local neighbours = read_backward_belt(current_entity)
-                for _, entities in pairs(neighbours) do
-                    entity_neighbours.input = entity_neighbours.input and entity_neighbours.input or {}
-                    entity_neighbours.input[#entity_neighbours.input + 1] = {entities[5].unit_number, entities[4]}
-                end
-            end
-        elseif entity_type == 'splitter' then
-            local forward_entities = read_forward_splitter(entity_position, entity_direction)
-            if forward_entities.left_entity.entity then
-                local left_entity_direction = forward_entities.left_entity.entity.direction
-                local left_entity_type = forward_entities.left_entity.entity.type
-                if not (left_entity_direction == op_dir(entity_direction)) and not (left_entity_type == 'underground-belt' and left_entity_direction == entity_direction and forward_entities.left_entity.entity.belt_to_ground_type == 'output') and not (left_entity_type == 'splitter' and left_entity_direction ~= entity_direction) then
-                    local left_entity_unit_number = forward_entities.left_entity.entity.unit_number
-                    entity_neighbours.left_output_target = left_entity_unit_number
-                end
-            end
-            if forward_entities.right_entity.entity then
-                local right_entity_direction = forward_entities.right_entity.entity.direction
-                local right_entity_type = forward_entities.right_entity.entity.type
-                if not (right_entity_direction == op_dir(entity_direction)) and not (right_entity_type == 'underground-belt' and right_entity_direction == entity_direction and forward_entities.right_entity.entity.belt_to_ground_type == 'output') and not (right_entity_type == 'splitter' and right_entity_direction ~= entity_direction) then
-                    local right_entity_unit_number = forward_entities.right_entity.entity.unit_number
-                    entity_neighbours.right_output_target = right_entity_unit_number
-                end
-            end
-        end
-        local neighbours = read_backward_splitter(current_entity)
-        if neighbours.left_feed_entity_data then
-            entity_neighbours.left = neighbours.left_feed_entity_data[5].unit_number
-        end
-        if neighbours.right_feed_entity_data then
-            entity_neighbours.right = neighbours.right_feed_entity_data[5].unit_number
-        end
-    end
-
     local function cache_forward_ug_belt_connector(entity, entity_unit_number, entity_position, entity_type, entity_direction, belt_to_ground_direction, previous_entity_unit_number, previous_entity_direction)
         local entity_neighbours = {}
-        if belt_to_ground_direction ~= 'output' then
+        if belt_to_ground_direction ~= "output" then
             entity_neighbours.input = previous_entity_unit_number and {{previous_entity_unit_number, previous_entity_direction}} or {}
         else
             entity_neighbours.ug_input = previous_entity_unit_number and previous_entity_unit_number
@@ -640,7 +441,8 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         --? Cache current entity
         local current_entity
         if not read_entity_data[entity_unit_number] then
-            current_entity = {
+            current_entity =
+            {
                 entity_position,
                 entity_neighbours,
                 entity_type,
@@ -649,10 +451,11 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 belt_to_ground_direction
             }
             read_entity_data[entity_unit_number] = current_entity
-        --belts_read = belts_read + 1
+            --belts_read = belts_read + 1
         end
         --belts_read = belts_read + 1
         --rendering.draw_text{text = belts_read, surface = surface, color = {1,1,1,1}, target = entity_position}
+
     end
 
     local function read_belts(starter_entity)
@@ -663,12 +466,9 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
 
         local function step_forward(entity, entity_unit_number, entity_position, entity_type, entity_direction, belt_to_ground_direction, previous_entity_unit_number, previous_entity_direction, previous_entity_input_side)
             local entity_neighbours = {}
-            if previous_entity_input_side and previous_entity_input_side == 'both' then
-                entity_neighbours['right'] = previous_entity_unit_number
-                entity_neighbours['left'] = previous_entity_unit_number
-            elseif previous_entity_input_side then
+            if previous_entity_input_side then
                 entity_neighbours[previous_entity_input_side] = previous_entity_unit_number
-            elseif belt_to_ground_direction ~= 'output' then
+            elseif belt_to_ground_direction ~= "output" then
                 entity_neighbours.input = previous_entity_unit_number and {{previous_entity_unit_number, previous_entity_direction}} or {}
             else
                 entity_neighbours.ug_input = previous_entity_unit_number and previous_entity_unit_number
@@ -676,7 +476,8 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             --? Cache current entity
             local current_entity
             if not read_entity_data[entity_unit_number] then
-                current_entity = {
+                current_entity =
+                {
                     entity_position,
                     entity_neighbours,
                     entity_type,
@@ -730,8 +531,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                                     read_entity_data[ug_neighbour_unit_number][2].input = {{entity_unit_number, entity_direction}}
                                 end
                             end
-                        else
-                            update_marker(ug_neighbour)
                         end
                     end
                 else
@@ -747,12 +546,12 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                             local splitter_input_side = false
                             if forward_entity_type == 'splitter' then
                                 forward_position = forward_entity.position
-                                splitter_input_side = get_splitter_input_side(current_entity, entity_direction, forward_position)
+                                splitter_input_side = get_splitter_input_side(entity_position, entity_direction, forward_position)
                             end
                             if not all_entities_marked[forward_entity_unit_number] then
                                 if not read_entity_data[forward_entity_unit_number] then
                                     if belts_read < max_belts then
-                                        return step_forward(forward_entity, forward_entity_unit_number, forward_position, forward_entity_type, forward_entity_direction, forward_entity_type == 'belt-to-ground' and forward_entity.belt_to_ground_type or nil, entity_unit_number, entity_direction, splitter_input_side)
+                                        return step_forward(forward_entity, forward_entity_unit_number, forward_position, forward_entity_type, forward_entity_direction, forward_entity_type == "belt-to-ground" and forward_entity.belt_to_ground_type or nil, entity_unit_number, entity_direction, splitter_input_side)
                                     else
                                         --cache_forward_ug_belt_connector(forward_entity, forward_entity_unit_number, forward_position, forward_entity_type, forward_entity_direction, nil, entity_unit_number, entity_direction, splitter_input_side)
                                         global.marking = true
@@ -762,7 +561,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                                             forward_entity,
                                             'forward',
                                             {
-                                                forward_entity_type == 'belt-to-ground' and forward_entity.belt_to_ground_type or nil,
+                                                forward_entity_type == "belt-to-ground" and forward_entity.belt_to_ground_type or nil,
                                                 splitter_input_side,
                                                 entity_direction,
                                                 entity_unit_number
@@ -778,8 +577,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                                         neighbours[splitter_input_side] = entity_unit_number
                                     end
                                 end
-                            else
-                                update_marker(forward_entity)
                             end
                         end
                     end
@@ -797,12 +594,12 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                         local splitter_input_side = false
                         if forward_entity_type == 'splitter' then
                             forward_position = forward_entity.position
-                            splitter_input_side = get_splitter_input_side(current_entity, entity_direction, forward_position)
+                            splitter_input_side = get_splitter_input_side(entity_position, entity_direction, forward_position)
                         end
                         if not all_entities_marked[forward_entity_unit_number] then
                             if not read_entity_data[forward_entity_unit_number] then
                                 if belts_read < max_belts then
-                                    return step_forward(forward_entity, forward_entity_unit_number, forward_position, forward_entity_type, forward_entity_direction, forward_entity_type == 'belt-to-ground' and forward_entity.belt_to_ground_type or nil, entity_unit_number, entity_direction, splitter_input_side)
+                                    return step_forward(forward_entity, forward_entity_unit_number, forward_position, forward_entity_type, forward_entity_direction, forward_entity_type == "belt-to-ground" and forward_entity.belt_to_ground_type or nil, entity_unit_number, entity_direction, splitter_input_side)
                                 else
                                     --cache_forward_ug_belt_connector(forward_entity, forward_entity_unit_number, forward_position, forward_entity_type, forward_entity_direction, nil, entity_unit_number, entity_direction, splitter_input_side)
                                     global.marking = true
@@ -828,8 +625,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                                     neighbours[splitter_input_side] = entity_unit_number
                                 end
                             end
-                        else
-                            update_marker(forward_entity)
                         end
                     end
                 end
@@ -845,7 +640,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                         local splitter_input_side = false
                         if left_entity_type == 'splitter' then
                             left_entity_position = forward_entities.left_entity.entity.position
-                            splitter_input_side = get_splitter_input_side(current_entity, entity_direction, left_entity_position)
+                            splitter_input_side = get_splitter_input_side(entity_position, entity_direction, left_entity_position)
                         end
                         if not all_entities_marked[left_entity_unit_number] then
                             if not read_entity_data[left_entity_unit_number] then
@@ -880,8 +675,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                                     neighbours[splitter_input_side] = entity_unit_number
                                 end
                             end
-                        else
-                            update_marker(forward_entities.left_entity.entity)
                         end
                     end
                 end
@@ -895,7 +688,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                         local splitter_input_side = false
                         if right_entity_type == 'splitter' then
                             right_entity_position = forward_entities.right_entity.entity.position
-                            splitter_input_side = get_splitter_input_side(current_entity, entity_direction, right_entity_position)
+                            splitter_input_side = get_splitter_input_side(entity_position, entity_direction, right_entity_position)
                         end
                         if not all_entities_marked[right_entity_unit_number] then
                             if not read_entity_data[right_entity_unit_number] then
@@ -926,24 +719,201 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                                     neighbours[splitter_input_side] = entity_unit_number
                                 end
                             end
-                        else
-                            update_marker(forward_entities.right_entity.entity)
                         end
                     end
                 end
             end
         end
         if forward then
-            local belt_to_ground_direction = starter_entity_type == 'belt-to-ground' and starter_entity.belt_to_ground_type or nil
+            local belt_to_ground_direction = starter_entity_type == "belt-to-ground" and starter_entity.belt_to_ground_type or nil
             step_forward(starter_entity, starter_unit_number, starter_entity_position, starter_entity_type, starter_entity_direction, belt_to_ground_direction, stitch_data and stitch_data[4], stitch_data and stitch_data[3], stitch_data and stitch_data[2])
+        end
+
+        local function read_backward_belt(current_entity)
+            local left_feed_direction_check = (current_entity[4] + 6) % 8
+            local rear_feed_direction_check = op_dir(current_entity[4])
+            local right_feed_direction_check = (current_entity[4] + 2) % 8
+            local left_feed_position = Position(current_entity[1]):translate(left_feed_direction_check, 1)
+            local rear_feed_position = Position(current_entity[1]):translate(rear_feed_direction_check, 1)
+            local right_feed_position = Position(current_entity[1]):translate(right_feed_direction_check, 1)
+            local left_feed_entity =
+                find_belt(
+                {
+                    position = left_feed_position,
+                    type = {'transport-belt', 'underground-belt', 'splitter'}
+                }
+            )[1]
+            local rear_feed_entity =
+                find_belt(
+                {
+                    position = rear_feed_position,
+                    type = {'transport-belt', 'underground-belt', 'splitter'}
+                }
+            )[1]
+            local right_feed_entity =
+                find_belt(
+                {
+                    position = right_feed_position,
+                    type = {'transport-belt', 'underground-belt', 'splitter'}
+                }
+            )[1]
+            local backstep_data = {}
+            local left_feed_direction = left_feed_entity and left_feed_entity.direction or nil
+            local rear_feed_direction = rear_feed_entity and rear_feed_entity.direction or nil
+            local right_feed_direction = right_feed_entity and right_feed_entity.direction or nil
+            if left_feed_direction and left_feed_direction == op_dir(left_feed_direction_check) then
+                local left_feed_type = left_feed_entity.type
+                local belt_to_ground_direction = left_feed_type == 'underground-belt' and left_feed_entity.belt_to_ground_type
+                if belt_to_ground_direction ~= 'input' then
+                    backstep_data.left_feed_entity_data = {
+                        left_feed_position,
+                        {},
+                        left_feed_type,
+                        left_feed_direction,
+                        left_feed_entity,
+                        belt_to_ground_direction
+                    }
+                end
+            end
+            if rear_feed_direction and rear_feed_direction == op_dir(rear_feed_direction_check) then
+                local rear_feed_type = rear_feed_entity.type
+                local belt_to_ground_direction = rear_feed_type == 'underground-belt' and rear_feed_entity.belt_to_ground_type
+                if belt_to_ground_direction ~= 'input' then
+                    backstep_data.rear_feed_entity_data = {
+                        rear_feed_position,
+                        {},
+                        rear_feed_type,
+                        rear_feed_direction,
+                        rear_feed_entity,
+                        belt_to_ground_direction
+                    }
+                end
+            end
+            if right_feed_direction and right_feed_direction == op_dir(right_feed_direction_check) then
+                local right_feed_type = right_feed_entity.type
+                local belt_to_ground_direction = right_feed_type == 'underground-belt' and right_feed_entity.belt_to_ground_type
+                if belt_to_ground_direction ~= 'input' then
+                    backstep_data.right_feed_entity_data = {
+                        right_feed_position,
+                        {},
+                        right_feed_type,
+                        right_feed_direction,
+                        right_feed_entity,
+                        belt_to_ground_direction
+                    }
+                end
+            end
+            return backstep_data
+        end
+
+        local function read_sideload_ug_belt(current_entity)
+            local left_feed_direction_check = (current_entity[4] + 6) % 8
+            local right_feed_direction_check = (current_entity[4] + 2) % 8
+            local left_feed_position = Position(current_entity[1]):translate(left_feed_direction_check, 1)
+            local right_feed_position = Position(current_entity[1]):translate(right_feed_direction_check, 1)
+            local left_feed_entity =
+                find_belt(
+                {
+                    position = left_feed_position,
+                    type = {'transport-belt', 'underground-belt', 'splitter'}
+                }
+            )[1]
+            local right_feed_entity =
+                find_belt(
+                {
+                    position = right_feed_position,
+                    type = {'transport-belt', 'underground-belt', 'splitter'}
+                }
+            )[1]
+            local backstep_data = {}
+            local left_feed_direction = left_feed_entity and left_feed_entity.direction or nil
+            local right_feed_direction = right_feed_entity and right_feed_entity.direction or nil
+            if left_feed_direction and left_feed_direction == op_dir(left_feed_direction_check) then
+                local left_feed_type = left_feed_entity.type
+                local belt_to_ground_direction = left_feed_type == 'underground-belt' and left_feed_entity.belt_to_ground_type
+                if belt_to_ground_direction ~= 'input' then
+                    backstep_data.left_feed_entity_data = {
+                        left_feed_position,
+                        {},
+                        left_feed_type,
+                        left_feed_direction,
+                        left_feed_entity,
+                        belt_to_ground_direction
+                    }
+                end
+            end
+            if right_feed_direction and right_feed_direction == op_dir(right_feed_direction_check) then
+                local right_feed_type = right_feed_entity.type
+                local belt_to_ground_direction = right_feed_type == 'underground-belt' and right_feed_entity.belt_to_ground_type
+                if belt_to_ground_direction ~= 'input' then
+                    backstep_data.right_feed_entity_data = {
+                        right_feed_position,
+                        {},
+                        right_feed_type,
+                        right_feed_direction,
+                        right_feed_entity,
+                        belt_to_ground_direction
+                    }
+                end
+            end
+            return backstep_data
+        end
+
+        local function read_backward_splitter(current_entity)
+            local shift_directions = splitter_check_table[op_dir(current_entity[4])]
+            local left_feed_position = current_entity[1] + shift_directions.right
+            local right_feed_position = current_entity[1] + shift_directions.left
+            local left_feed_entity =
+                find_belt(
+                {
+                    position = left_feed_position,
+                    type = {'transport-belt', 'underground-belt', 'splitter'}
+                }
+            )[1]
+            local right_feed_entity =
+                find_belt(
+                {
+                    position = right_feed_position,
+                    type = {'transport-belt', 'underground-belt', 'splitter'}
+                }
+            )[1]
+            local backstep_data = {}
+            local left_feed_direction = left_feed_entity and left_feed_entity.direction or nil
+            local right_feed_direction = right_feed_entity and right_feed_entity.direction or nil
+            if left_feed_direction and left_feed_direction == current_entity[4] then
+                local left_feed_type = left_feed_entity.type
+                local belt_to_ground_direction = left_feed_type == 'underground-belt' and left_feed_entity.belt_to_ground_type
+                if belt_to_ground_direction ~= 'input' then
+                    backstep_data.left_feed_entity_data = {
+                        left_feed_position,
+                        {},
+                        left_feed_type,
+                        left_feed_direction,
+                        left_feed_entity,
+                        belt_to_ground_direction
+                    }
+                end
+            end
+            if right_feed_direction and right_feed_direction == current_entity[4] then
+                local right_feed_type = right_feed_entity.type
+                local belt_to_ground_direction = right_feed_type == 'underground-belt' and right_feed_entity.belt_to_ground_type
+                if belt_to_ground_direction ~= 'input' then
+                    backstep_data.right_feed_entity_data = {
+                        right_feed_position,
+                        {},
+                        right_feed_type,
+                        right_feed_direction,
+                        right_feed_entity,
+                        belt_to_ground_direction
+                    }
+                end
+            end
+            return backstep_data
         end
 
         local function cache_backward_ug_belt_connector(entity, entity_unit_number, entity_position, entity_type, entity_direction, belt_to_ground_direction, previous_entity_unit_number, previous_entity_output_side)
             local entity_neighbours = read_entity_data[entity_unit_number] and read_entity_data[entity_unit_number][2] or {}
-            if previous_entity_output_side == 'both' then
-                entity_neighbours['left_output_target'] = previous_entity_unit_number
-                entity_neighbours['right_output_target'] = previous_entity_unit_number
-            elseif previous_entity_output_side then
+            if previous_entity_output_side then
                 entity_neighbours[previous_entity_output_side] = previous_entity_unit_number
             else
                 if previous_entity_unit_number then
@@ -957,7 +927,8 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             --? Cache current entity
             local current_entity
             if not read_entity_data[entity_unit_number] then
-                current_entity = {
+                current_entity =
+                {
                     entity_position,
                     entity_neighbours,
                     entity_type,
@@ -966,7 +937,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     belt_to_ground_direction
                 }
                 read_entity_data[entity_unit_number] = current_entity
-            --belts_read = belts_read + 1
+                --belts_read = belts_read + 1
             end
             --belts_read = belts_read + 1
             --rendering.draw_text{text = belts_read, surface = surface, color = {1,1,1,1}, target = entity_position}
@@ -983,7 +954,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 entity_neighbours.input[#entity_neighbours.input + 1] = {neighbour_unit_number, neighbour_direction}
                 local splitter_output_side
                 if neighbour_type == 'splitter' then
-                    splitter_output_side = get_splitter_input_side({neighbour_position, false, current_entity[3]}, neighbour_direction, current_entity[1], true)
+                    splitter_output_side = get_splitter_input_side(neighbour_position, neighbour_direction, current_entity[1]) == 'right' and 'left_output_target' or 'right_output_target'
                 end
                 if not all_entities_marked[neighbour_unit_number] then
                     if not read_entity_data[neighbour_unit_number] then
@@ -1012,16 +983,11 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                             read_entity_data[neighbour_unit_number][2][splitter_output_side] = entity_unit_number
                         end
                     end
-                else
-                    update_marker(neighbour[5])
                 end
             end
 
             local entity_neighbours = read_entity_data[entity_unit_number] and read_entity_data[entity_unit_number][2] or {}
-            if previous_entity_output_side == 'both' then
-                entity_neighbours['left_output_target'] = previous_entity_unit_number
-                entity_neighbours['right_output_target'] = previous_entity_unit_number
-            elseif previous_entity_output_side then
+            if previous_entity_output_side then
                 entity_neighbours[previous_entity_output_side] = previous_entity_unit_number
             else
                 if previous_entity_unit_number then
@@ -1037,7 +1003,8 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             if read_entity_data[entity_unit_number] then
                 current_entity = read_entity_data[entity_unit_number]
             else
-                current_entity = {
+                current_entity =
+                {
                     entity_position,
                     entity_neighbours,
                     entity_type,
@@ -1082,8 +1049,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                             else
                                 read_entity_data[ug_neighbour_unit_number][2].output_target = {entity_unit_number, entity_direction}
                             end
-                        else
-                            update_marker(ug_neighbour)
                         end
                     end
                     local neighbours = read_sideload_ug_belt(current_entity)
@@ -1135,7 +1100,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     entity_neighbours.left = neighbour_unit_number
                     local splitter_output_side
                     if neighbour_type == 'splitter' then
-                        splitter_output_side = get_splitter_input_side({neighbour_position, false, current_entity[3]}, neighbour_direction, current_entity[1], true)
+                        splitter_output_side = get_splitter_input_side(neighbour_position, neighbour_direction, entity_position) == 'right' and 'left_output_target' or 'right_output_target'
                     end
                     if not all_entities_marked[neighbour_unit_number] then
                         if not read_entity_data[neighbour_unit_number] then
@@ -1168,8 +1133,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                                 read_entity_data[neighbour_unit_number][2][splitter_output_side] = entity_unit_number
                             end
                         end
-                    else
-                        update_marker(neighbour[5])
                     end
                 end
                 if neighbours.right_feed_entity_data then
@@ -1181,7 +1144,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     entity_neighbours.right = neighbour_unit_number
                     local splitter_output_side
                     if neighbour_type == 'splitter' then
-                        splitter_output_side = get_splitter_input_side({neighbour_position, false, current_entity[3]}, neighbour_direction, current_entity[1], true)
+                        splitter_output_side = get_splitter_input_side(neighbour_position, neighbour_direction, entity_position) == 'right' and 'left_output_target' or 'right_output_target'
                     end
                     if not all_entities_marked[neighbour_unit_number] then
                         if not read_entity_data[neighbour_unit_number] then
@@ -1210,8 +1173,6 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                                 read_entity_data[neighbour_unit_number][2][splitter_output_side] = entity_unit_number
                             end
                         end
-                    else
-                        update_marker(neighbour[5])
                     end
                 end
             end
@@ -1249,6 +1210,7 @@ local function highlight_scheduler()
         if wt and next(wt) then
             --break
             local next_belt = table.remove(wt, 1)
+            game.print(serpent.block(next_belt))
             if next_belt[1].valid then
                 highlight_belts(next_belt[1], player_index, next_belt[2] == 'forward' and true or false, next_belt[2] == 'backward' and true or false, next_belt[3])
             end
@@ -1274,17 +1236,18 @@ local function max_belts_handler()
     else
         global.belts_marked_this_tick = 0
         global.marking = false
+        remote.call('PickerAtheneum', 'event_queue_add', 'renderer')
         --remote.call("PickerAtheneum","queue_remove","PickerBeltTools","max_belts_handler")
-        remote.call('PickerAtheneum', 'event_queue_add', 'max_belts_handler', nil, tables.tick_options)
     end
 end
 
 local function check_selection(event)
     local player, pdata = Player.get(event.player_index)
-    if player.is_shortcut_toggled('picker-belt-highlighter') then
+    if player.is_shortcut_toggled('picker-belt-highlighter') and player.game_view_settings.show_entity_info then
         if not pdata.disable_auto_highlight then
             local selection = player.selected
-            if selection and tables.allowed_types[selection.type] then
+            -- TODO Faster check if table method possibly
+            if selection and allowed_types[selection.type] then
                 pdata.current_beltnet_table = pdata.current_beltnet_table or {}
                 pdata.current_marker_table = pdata.current_marker_table or {}
                 pdata.scheduled_markers = pdata.scheduled_markers or {}
@@ -1304,8 +1267,8 @@ local function check_selection(event)
 
                     highlight_belts(selection, event.player_index, true, true)
                     if global.marking then
+                        remote.call('PickerAtheneum', 'event_queue_add', 'renderer')
                         --remote.call("PickerAtheneum","queue_add","PickerBeltTools","max_belts_handler")
-                        remote.call('PickerAtheneum', 'event_queue_add', 'max_belts_handler', nil, tables.tick_options)
                     end
                 end
             else
@@ -1317,9 +1280,10 @@ local function check_selection(event)
                 end
             end
         end
-    end -- Toggled off
+    end -- Toggled off, or alt-mode off
 end
-Event.register(defines.events.on_selected_entity_changed, check_selection, nil, nil, tables.protected)
+Event.register(defines.events.on_selected_entity_changed, check_selection, nil, nil, protected)
+
 
 local function on_lua_shortcut(event)
     if event.prototype_name == 'picker-belt-highlighter' then
@@ -1331,6 +1295,21 @@ local function on_lua_shortcut(event)
 end
 Event.register(_G.defines.events.on_lua_shortcut, on_lua_shortcut)
 
+local function on_player_toggled_alt_mode(event)
+    local player, pdata = Player.get(event.player_index)
+    if not player.game_view_settings.show_entity_info then
+        if pdata.current_beltnet_table and next(pdata.current_beltnet_table) then
+            destroy_markers(pdata.current_marker_table)
+            pdata.current_beltnet_table = nil
+            pdata.current_marker_table = nil
+            pdata.scheduled_markers = nil
+        end
+    else
+        check_selection(event)
+    end
+end
+Event.register(defines.events.on_player_toggled_alt_mode, on_player_toggled_alt_mode)
+
 -- Just toggle it on right away!
 local function on_player_created(event)
     local player = Player.get(event.player_index)
@@ -1340,21 +1319,14 @@ local function on_player_created(event)
 end
 Event.register(defines.events.on_player_created, on_player_created)
 
-local function on_runtime_mod_setting_changed(event)
-    if event.setting == 'picker-max-renders-tick' then
-        max_belts = settings.global['picker-max-renders-tick'].value
-    end
-end
-Event.register(defines.events.on_runtime_mod_setting_changed, on_runtime_mod_setting_changed)
-
 Interface['max_belts_handler'] = function()
     max_belts_handler()
 end
 
 local function on_load()
-    Event.render_id = remote.call('PickerAtheneum', 'generate_event_name', 'max_belts_handler')
+    Event.render_id = remote.call('PickerAtheneum', 'generate_event_name', 'renderer')
     Event.derender_id = remote.call('PickerAtheneum', 'generate_event_name', 'derenderer')
-    Event.register(Event.render_id, max_belts_handler, nil, nil, tables.tick_options)
-    Event.register(Event.derender_id, max_belts_handler, nil, nil, tables.tick_options)
+    Event.register(Event.render_id, max_belts_handler)
+    Event.register(Event.derender_id, max_belts_handler)
 end
 Event.on_event({Event.core_events.on_init, Event.core_events.on_load}, on_load)

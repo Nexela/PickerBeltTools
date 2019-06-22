@@ -8,17 +8,26 @@ local Event = require('__stdlib__/stdlib/event/event')
 local Player = require('__stdlib__/stdlib/event/player')
 local Position = require('__stdlib__/stdlib/area/position')
 local Direction = require('__stdlib__/stdlib/area/direction')
-local Interface = require('__stdlib__/stdlib/scripts/interface')
+
 local tables = require('scripts/belt-highlight/tables')
 
-
-local MAX_BELTS = settings.global['picker-max-renders-tick'].value
-local ug_search_radius = settings.global['picker-underground-search-radius'].value
+local MAX_BELTS  -- = settings.global['picker-max-renders-tick'].value
+local UG_SEARCH_RADIUS  -- = settings.global['picker-underground-search-radius'].value
 
 local op_dir = Direction.opposite_direction
 local draw_sprite = rendering.draw_sprite
 local draw_line = rendering.draw_line
 local destroy = rendering.destroy
+
+local function get_color(player_settings)
+    local alpha = player_settings['picker-belt-marker-alpha'].value / 100
+    return {
+        alpha * player_settings['picker-belt-marker-red'].value / 100,
+        alpha * player_settings['picker-belt-marker-green'].value / 100,
+        alpha * player_settings['picker-belt-marker-blue'].value / 100,
+        alpha
+    }
+end
 
 local function show_underground_sprites(event)
     local player, pdata = Player.get(event.player_index)
@@ -31,17 +40,10 @@ local function show_underground_sprites(event)
     --? Assign working table reference to global reference under player
     pdata.current_underground_marker_table = all_markers
 
-    local player_settings = player.mod_settings
-    local alpha = player_settings['picker-belt-marker-alpha'].value / 100
-    local player_color_pref = {
-        alpha * player_settings['picker-belt-marker-red'].value / 100,
-        alpha * player_settings['picker-belt-marker-green'].value / 100,
-        alpha * player_settings['picker-belt-marker-blue'].value / 100,
-        alpha
-    }
+    local player_color_pref = get_color(player.mod_settings)
 
     local filter = {
-        area = {Position(player.position):expand_to_area(ug_search_radius)},
+        area = {Position(player.position):expand_to_area(UG_SEARCH_RADIUS)},
         type = {'underground-belt'},
         force = player.force
     }
@@ -141,22 +143,13 @@ local bor = bit32.bor
 local lshift = bit32.lshift
 local function highlight_belts(selected_entity, player_index, forward, backward, stitch_data)
     local player, pdata = Player.get(player_index)
-    --local belt_table = {}
     local read_entity_data = {}
     local all_entities_marked = pdata.current_beltnet_table and pdata.current_beltnet_table or {}
     local all_markers = pdata.current_marker_table and pdata.current_marker_table or {}
 
     local belts_read = 0
-    --local belts_read = 0
     local markers_made = next(all_markers) and #all_markers or 0
-    local player_settings = player.mod_settings
-    local alpha = player_settings['picker-belt-marker-alpha'].value / 100
-    local player_color_pref = {
-        alpha * player_settings['picker-belt-marker-red'].value / 100,
-        alpha * player_settings['picker-belt-marker-green'].value / 100,
-        alpha * player_settings['picker-belt-marker-blue'].value / 100,
-        alpha
-    }
+    local player_color_pref = get_color(player.mod_settings)
 
     --? Assign working table references to global reference under player
     pdata.current_marker_table = all_markers
@@ -1012,7 +1005,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                         if neighbour_type ~= 'splitter' then
                             read_entity_data[neighbour_unit_number][2].output_target = entity_unit_number
                         else
-                            read_entity_data[neighbour_unit_number][2][splitter_output_side .. "_output_target"] = entity_unit_number
+                            read_entity_data[neighbour_unit_number][2][splitter_output_side .. '_output_target'] = entity_unit_number
                         end
                     end
                 else
@@ -1025,7 +1018,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 entity_neighbours['left_output_target'] = previous_entity_unit_number
                 entity_neighbours['right_output_target'] = previous_entity_unit_number
             elseif previous_entity_output_side then
-                entity_neighbours[previous_entity_output_side .. "_output_target"] = previous_entity_unit_number
+                entity_neighbours[previous_entity_output_side .. '_output_target'] = previous_entity_unit_number
             else
                 if previous_entity_unit_number then
                     if belt_to_ground_direction ~= 'input' and not entity_neighbours.output_target then
@@ -1168,7 +1161,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                             if neighbour_type ~= 'splitter' then
                                 read_entity_data[neighbour_unit_number][2].output_target = entity_unit_number
                             else
-                                read_entity_data[neighbour_unit_number][2][splitter_output_side .. "_output_target"] = entity_unit_number
+                                read_entity_data[neighbour_unit_number][2][splitter_output_side .. '_output_target'] = entity_unit_number
                             end
                         end
                     else
@@ -1210,7 +1203,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                             if neighbour_type ~= 'splitter' then
                                 read_entity_data[neighbour_unit_number][2].output_target = entity_unit_number
                             else
-                                read_entity_data[neighbour_unit_number][2][splitter_output_side .. "_output_target"] = entity_unit_number
+                                read_entity_data[neighbour_unit_number][2][splitter_output_side .. '_output_target'] = entity_unit_number
                             end
                         end
                     else
@@ -1277,7 +1270,6 @@ local function max_belts_handler()
     else
         global.belts_marked_this_tick = 0
         global.marking = false
-        --remote.call("PickerAtheneum","queue_remove","PickerBeltTools","max_belts_handler")
         remote.call('PickerAtheneum', 'event_queue_add', 'max_belts_handler', nil, tables.tick_options)
     end
 end
@@ -1285,39 +1277,36 @@ end
 local function check_selection(event)
     local player, pdata = Player.get(event.player_index)
     if player.is_shortcut_toggled('picker-belt-highlighter') then
-        if not pdata.disable_auto_highlight then
-            local selection = player.selected
-            if selection and tables.allowed_types[selection.type] then
-                pdata.current_beltnet_table = pdata.current_beltnet_table or {}
-                pdata.current_marker_table = pdata.current_marker_table or {}
-                pdata.scheduled_markers = pdata.scheduled_markers or {}
-                if not next(pdata.scheduled_markers) then
-                    pdata.scheduled_markers[1] = {}
-                end
-                global.marking_players = global.marking_players or {}
-                if not pdata.current_beltnet_table[selection.unit_number] then
-                    if next(pdata.current_beltnet_table) then
-                        destroy_markers(pdata.current_marker_table)
-                        pdata.current_beltnet_table = nil
-                        pdata.current_marker_table = nil
-                        pdata.scheduled_markers = nil
-                    end
-                    global.total_belts_marked = 0
-                    global.belts_marked_this_tick = 0
-
-                    highlight_belts(selection, event.player_index, true, true)
-                    if global.marking then
-                        --remote.call("PickerAtheneum","queue_add","PickerBeltTools","max_belts_handler")
-                        remote.call('PickerAtheneum', 'event_queue_add', 'max_belts_handler', nil, tables.tick_options)
-                    end
-                end
-            else
-                if pdata.current_beltnet_table and next(pdata.current_beltnet_table) then
+        local selection = player.selected
+        if selection and tables.allowed_types[selection.type] then
+            pdata.current_beltnet_table = pdata.current_beltnet_table or {}
+            pdata.current_marker_table = pdata.current_marker_table or {}
+            pdata.scheduled_markers = pdata.scheduled_markers or {}
+            if not next(pdata.scheduled_markers) then
+                pdata.scheduled_markers[1] = {}
+            end
+            global.marking_players = global.marking_players or {}
+            if not pdata.current_beltnet_table[selection.unit_number] then
+                if next(pdata.current_beltnet_table) then
                     destroy_markers(pdata.current_marker_table)
                     pdata.current_beltnet_table = nil
                     pdata.current_marker_table = nil
                     pdata.scheduled_markers = nil
                 end
+                global.total_belts_marked = 0
+                global.belts_marked_this_tick = 0
+
+                highlight_belts(selection, event.player_index, true, true)
+                if global.marking then
+                    remote.call('PickerAtheneum', 'event_queue_add', 'max_belts_handler', nil, tables.tick_options)
+                end
+            end
+        else
+            if pdata.current_beltnet_table and next(pdata.current_beltnet_table) then
+                destroy_markers(pdata.current_marker_table)
+                pdata.current_beltnet_table = nil
+                pdata.current_marker_table = nil
+                pdata.scheduled_markers = nil
             end
         end
     end -- Toggled off
@@ -1332,9 +1321,10 @@ local function on_lua_shortcut(event)
         end
     end
 end
-Event.register(_G.defines.events.on_lua_shortcut, on_lua_shortcut)
+Event.register(defines.events.on_lua_shortcut, on_lua_shortcut)
 
--- Just toggle it on right away!
+--! API HACK Toggle on the setting right away
+-- Can be removed if API ever gets added for default toggle state
 local function on_player_created(event)
     local player = Player.get(event.player_index)
     if player.is_shortcut_available('picker-belt-highlighter') then
@@ -1346,18 +1336,18 @@ Event.register(defines.events.on_player_created, on_player_created)
 local function on_runtime_mod_setting_changed(event)
     if event.setting == 'picker-max-renders-tick' then
         MAX_BELTS = settings.global['picker-max-renders-tick'].value
+    elseif event.setting == 'picker-underground_search_radius' then
+        UG_SEARCH_RADIUS = settings.global['picker-underground-search-radius'].value
     end
 end
 Event.register(defines.events.on_runtime_mod_setting_changed, on_runtime_mod_setting_changed)
 
-Interface['max_belts_handler'] = function()
-    max_belts_handler()
-end
-
-local function on_load()
+local function on_init_and_load()
+    UG_SEARCH_RADIUS = settings.global['picker-underground-search-radius'].value
+    MAX_BELTS = settings.global['picker-max-renders-tick'].value
     Event.render_id = remote.call('PickerAtheneum', 'generate_event_name', 'max_belts_handler')
     Event.derender_id = remote.call('PickerAtheneum', 'generate_event_name', 'render_remover')
     Event.register(Event.render_id, max_belts_handler, nil, nil, tables.tick_options)
     Event.register(Event.derender_id, max_belts_handler, nil, nil, tables.tick_options)
 end
-Event.on_event({Event.core_events.on_init, Event.core_events.on_load}, on_load)
+Event.on_event({Event.core_events.on_init, Event.core_events.on_load}, on_init_and_load)

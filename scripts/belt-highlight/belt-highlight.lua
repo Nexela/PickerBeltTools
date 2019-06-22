@@ -41,10 +41,9 @@ local function show_underground_sprites(event)
     pdata.current_underground_marker_table = all_markers
 
     local player_color_pref = get_color(player.mod_settings)
-
     local filter = {
-        area = {Position(player.position):expand_to_area(UG_SEARCH_RADIUS)},
-        type = {'underground-belt'},
+        area = Position(player.position):expand_to_area(UG_SEARCH_RADIUS),
+        type = 'underground-belt',
         force = player.force
     }
     for _, entity in pairs(player.surface.find_entities_filtered(filter)) do
@@ -1270,7 +1269,7 @@ local function max_belts_handler()
     else
         global.belts_marked_this_tick = 0
         global.marking = false
-        remote.call('PickerAtheneum', 'event_queue_add', 'max_belts_handler', nil, tables.tick_options)
+        remote.call('PickerAtheneum', 'event_queue_add', 'on_belt_marker_render', nil, tables.tick_options)
     end
 end
 
@@ -1298,7 +1297,7 @@ local function check_selection(event)
 
                 highlight_belts(selection, event.player_index, true, true)
                 if global.marking then
-                    remote.call('PickerAtheneum', 'event_queue_add', 'max_belts_handler', nil, tables.tick_options)
+                    remote.call('PickerAtheneum', 'event_queue_add', 'on_belt_marker_render', nil, tables.tick_options)
                 end
             end
         else
@@ -1345,9 +1344,9 @@ Event.register(defines.events.on_runtime_mod_setting_changed, on_runtime_mod_set
 local function on_init_and_load()
     UG_SEARCH_RADIUS = settings.global['picker-underground-search-radius'].value
     MAX_BELTS = settings.global['picker-max-renders-tick'].value
-    Event.render_id = remote.call('PickerAtheneum', 'generate_event_name', 'max_belts_handler')
-    Event.derender_id = remote.call('PickerAtheneum', 'generate_event_name', 'render_remover')
-    Event.register(Event.render_id, max_belts_handler, nil, nil, tables.tick_options)
-    Event.register(Event.derender_id, max_belts_handler, nil, nil, tables.tick_options)
+    local render = Event.set_event_name('on_belt_marker_render', remote.call('PickerAtheneum', 'generate_event_name', 'on_belt_marker_render'))
+    local derender = Event.set_event_name('on_belt_marker_derender', remote.call('PickerAtheneum', 'generate_event_name', 'on_belt_marker_derender'))
+    Event.register(render, max_belts_handler, nil, nil, tables.tick_options)
+    Event.register(derender, max_belts_handler, nil, nil, tables.tick_options)
 end
 Event.on_event({Event.core_events.on_init, Event.core_events.on_load}, on_init_and_load)

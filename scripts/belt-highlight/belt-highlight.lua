@@ -1270,7 +1270,7 @@ local function max_belts_handler()
     else
         global.belts_marked_this_tick = 0
         global.marking = false
-        remote.call('PickerAtheneum', 'event_queue_remove', 'on_belt_marker_render', nil, tables.tick_options)
+        remote.call('PickerAtheneum', 'event_queue_remove', 'on_belt_marker_render')
     end
 end
 

@@ -11,7 +11,7 @@ local Direction = require('__stdlib__/stdlib/area/direction')
 
 local tables = require('scripts/belt-highlight/tables')
 
-local MAX_BELTS  -- = settings.global['picker-max-renders-tick'].value
+local MAX_BELTS -- = settings.global['picker-max-renders-tick'].value
 local UG_SEARCH_RADIUS  -- = settings.global['picker-underground-search-radius'].value
 
 local op_dir = Direction.opposite_direction
@@ -141,6 +141,7 @@ Event.register('picker-show-underground-belt-paths', highlight_underground)
 local bor = bit32.bor
 local lshift = bit32.lshift
 local function highlight_belts(selected_entity, player_index, forward, backward, stitch_data)
+    MAX_BELTS = 5
     local player, pdata = Player.get(player_index)
     local read_entity_data = {}
     local all_entities_marked = pdata.current_beltnet_table and pdata.current_beltnet_table or {}
@@ -1269,7 +1270,7 @@ local function max_belts_handler()
     else
         global.belts_marked_this_tick = 0
         global.marking = false
-        remote.call('PickerAtheneum', 'event_queue_add', 'on_belt_marker_render', nil, tables.tick_options)
+        remote.call('PickerAtheneum', 'event_queue_remove', 'on_belt_marker_render', nil, tables.tick_options)
     end
 end
 

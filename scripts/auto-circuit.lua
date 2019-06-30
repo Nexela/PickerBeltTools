@@ -11,7 +11,10 @@ end
 Event.register(defines.events.on_lua_shortcut, shortcut)
 
 local function pole_check(entity)
-    return entity.type == 'electric-pole' and entity.prototype.max_wire_distance >= 15
+    if entity.type == 'electric-pole' then
+        local prototype = entity.prototype
+        return prototype.supply_area_distance <= 2 and prototype.max_wire_distance >= 15
+    end
 end
 
 local function connect_wires(entity)
@@ -40,7 +43,7 @@ local function on_built_entity(event)
         if event.name == defines.events.on_built_entity then
             local player = game.get_player(event.player_index)
             return player.is_shortcut_toggled('picker-auto-circuit') and connect_wires(event.created_entity)
-        else
+        elseif settings.startup['picker-auto-circuit-bots'].value then
             return connect_wires(event.created_entity)
         end
     end

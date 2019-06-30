@@ -3,6 +3,8 @@ Version: 1.1.3
 Date: ??????
   Changes:
     - Auto circuit wires by bots option off by default.
+  Bugfixes:
+    - Fix max_belts always being 5.
 ---------------------------------------------------------------------------------------------------
 Version: 1.1.2
 Date: ??????

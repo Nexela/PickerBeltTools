@@ -141,7 +141,6 @@ Event.register('picker-show-underground-belt-paths', highlight_underground)
 local bor = bit32.bor
 local lshift = bit32.lshift
 local function highlight_belts(selected_entity, player_index, forward, backward, stitch_data)
-    MAX_BELTS = 5
     local player, pdata = Player.get(player_index)
     local read_entity_data = {}
     local all_entities_marked = pdata.current_beltnet_table and pdata.current_beltnet_table or {}

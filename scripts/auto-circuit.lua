@@ -21,7 +21,7 @@ local function connect_wires(entity)
     local copper = entity.neighbours['copper']
     for _, pole in pairs(copper) do
         if pole_check(pole) then
-            local red, green = pole.neighbours['green'], pole.neighbours['red']
+            local green, red = pole.neighbours['green'], pole.neighbours['red']
             if #green > 0 then
                 entity.connect_neighbour {
                     wire = defines.wire_type.green,
@@ -43,7 +43,7 @@ local function on_built_entity(event)
         if event.name == defines.events.on_built_entity then
             local player = game.get_player(event.player_index)
             return player.is_shortcut_toggled('picker-auto-circuit') and connect_wires(event.created_entity)
-        elseif settings.startup['picker-auto-circuit-bots'].value then
+        elseif settings.global['picker-auto-circuit-bots'].value then
             return connect_wires(event.created_entity)
         end
     end

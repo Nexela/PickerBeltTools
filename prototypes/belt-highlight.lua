@@ -47,7 +47,6 @@ belt_marker_box[#belt_marker_box + 1] = {
 local belt_sprite_prototypes = {}
 do
     local i = 1
-    --for y = 0, 128 - 32, 32 do
         for x = 0, 512 - 32, 32 do
             belt_sprite_prototypes[i] = {
                 type = 'sprite',
@@ -60,7 +59,6 @@ do
             }
             i = i + 1
         end
-    --end
 end
 
 local splitter_table = {
@@ -68,18 +66,6 @@ local splitter_table = {
         size = {x = 64, y = 32},
         width = {x = 256, y = 128}
     },
-    --['splitter-marker-east'] = {
-    --    size = {x = 32, y = 64},
-    --    width = {x = 128, y = 256}
-    --},
-    --['splitter-marker-south'] = {
-    --    size = {x = 64, y = 32},
-    --    width = {x = 256, y = 128}
-    --},
-    --['splitter-marker-west'] = {
-    --    size = {x = 32, y = 64},
-    --    width = {x = 128, y = 256}
-    --}
 }
 
 local splitter_sprite_prototypes = {}
@@ -106,7 +92,6 @@ end
 local ug_belt_sprite_prototypes = {}
 do
     local i = 1
-    --for y = 0, 128 - 32, 32 do
         for x = 0, 512 - 32, 32 do
             ug_belt_sprite_prototypes[i] = {
                 type = 'sprite',
@@ -130,7 +115,6 @@ do
             }
             i = i + 1
         end
-    --end
 end
 
 data:extend(belt_sprite_prototypes)

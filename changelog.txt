@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.1.5
+Date: ??????
+  Features:
+    - Repeatadly calling belt-brush corners on an underground belt or pipe BP will shrink the distance.
+  Bugfixes:
+    - Fix balancers not working because 0 is not false!
+---------------------------------------------------------------------------------------------------
 Version: 1.1.4
 Date: ??????
   Changes:

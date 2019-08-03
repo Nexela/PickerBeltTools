@@ -239,37 +239,42 @@ local function build_ptg_brush(stack, ptg, lanes)
         local name = ptg.name
         local direction = ptg.direction or 0
         local new_ents = {}
-        local max = game.entity_prototypes[name].max_underground_distance
+        local distance = tonumber(stack.label:match('Belt Brush Pipe to Ground %d+x(%d+)'))
+        local max = distance or game.entity_prototypes[name].max_underground_distance
         local next_id = 0
         local get_next_id = function()
             next_id = next_id + 1
             return next_id
         end
 
-        for x = 0.5, lanes, 1 do
-            new_ents[#new_ents + 1] = {
-                entity_number = get_next_id(),
-                name = name,
-                direction = direction,
-                position = {x, 0.5}
-            }
-            new_ents[#new_ents + 1] = {
-                entity_number = get_next_id(),
-                name = name,
-                direction = Direction.opposite_direction(direction),
-                position = {x, (0.5 + max)}
-            }
-        end
-
-        table.each(
-            new_ents,
-            function(ent)
-                ent.position = Position(ent.position):translate(defines.direction.west, math.ceil(lanes / 2))
-                ent.position = Position(ent.position):translate(defines.direction.north, math.ceil(max / 2))
+        if max > 0 then
+            for x = 0.5, lanes, 1 do
+                new_ents[#new_ents + 1] = {
+                    entity_number = get_next_id(),
+                    name = name,
+                    direction = direction,
+                    position = {x, 0.5}
+                }
+                new_ents[#new_ents + 1] = {
+                    entity_number = get_next_id(),
+                    name = name,
+                    direction = Direction.opposite_direction(direction),
+                    position = {x, (0.5 + max)}
+                }
             end
-        )
-        stack.set_blueprint_entities(new_ents)
-        stack.label = 'Belt Brush Pipe to Ground ' .. lanes
+
+            table.each(
+                new_ents,
+                function(ent)
+                    ent.position = Position(ent.position):translate(defines.direction.west, math.ceil(lanes / 2))
+                    ent.position = Position(ent.position):translate(defines.direction.north, math.ceil(max / 2))
+                end
+            )
+            stack.set_blueprint_entities(new_ents)
+            stack.label = 'Belt Brush Pipe to Ground ' .. lanes .. 'x' .. (max - 1)
+        else
+            build_beltbrush(stack, ptg.name, lanes)
+        end
     end
 end
 
@@ -277,30 +282,26 @@ end
 -- pressing a second time will mirror the corner
 -- pressing a third time will revert to brush width
 local function beltbrush_corners(event)
-    local player = Player.get(event.player_index)
-    if Inventory.is_named_bp(player.cursor_stack, 'Belt Brush') then
-        local stack = player.cursor_stack
+    local player = game.get_player(event.player_index)
+    local stack = player.cursor_stack
+    if Inventory.is_named_bp(stack, 'Belt Brush') then
         local stored = tonumber(Pad.get_or_create_adjustment_pad(player, 'beltbrush')['beltbrush_text_box'].text)
         local bp_ents = stack.get_blueprint_entities()
-        local belt =
-            table.find(
+        local belt, ug, ptg
+        table.find(
             bp_ents,
             function(v)
-                return game.entity_prototypes[v.name].type == 'transport-belt'
-            end
-        )
-        local ug =
-            table.find(
-            bp_ents,
-            function(v)
-                return game.entity_prototypes[v.name].type == 'underground-belt'
-            end
-        )
-        local ptg =
-            table.find(
-            bp_ents,
-            function(v)
-                return game.entity_prototypes[v.name].type == 'pipe-to-ground'
+                local proto = game.entity_prototypes[v.name].type
+                if proto == 'transport-belt' then
+                    belt = v
+                    return true
+                elseif proto == 'underground-belt' then
+                    ug = v
+                    return true
+                elseif proto == 'pipe-to-ground' then
+                    ptg = v
+                    return true
+                end
             end
         )
 
@@ -313,7 +314,6 @@ local function beltbrush_corners(event)
                 build_ptg_brush(stack, ptg, stored)
             end
         elseif stack.label:find('Belt Brush Corner Left') then
-            --Event.raise_event(Event.get_event_name('on_blueprint_mirrored'), {player_index = player.index, corner = true})
             mirror_corners(stack)
             stack.label = 'Belt Brush Corner Right ' .. stack.label:match('%d+')
         elseif stack.label:find('Belt Brush Corner Right') then
@@ -321,7 +321,7 @@ local function beltbrush_corners(event)
         elseif stack.label:find('Belt Brush Underground') then
             build_ug_brush(stack, ug, tonumber(stack.label:match('%d+')))
         elseif stack.label:find('Belt Brush Pipe to Ground') then
-            build_beltbrush(stack, ptg.name, tonumber(stack.label:match('%d+')))
+            build_ptg_brush(stack, ptg, tonumber(stack.label:match('%d+')))
         end
     end
 end
@@ -500,7 +500,7 @@ local function increase_decrease_reprogrammer(event)
     if get_match(stack) or belt_brush then
         local pad = Pad.get_or_create_adjustment_pad(player, 'beltbrush')
         local text_field = pad['beltbrush_text_box']
-        local lanes = Inventory.is_named_bp(stack, 'Belt Brush') and stack.label:match('%d+') or tonumber(text_field.text) or 1
+        local lanes = belt_brush and stack.label:match('%d+') or tonumber(text_field.text) or 1
         if event.element and event.element.name == 'beltbrush_text_box' then
             if not tonumber(event.element.text) then
                 lanes = 1
@@ -514,7 +514,7 @@ local function increase_decrease_reprogrammer(event)
         end
         text_field.text = lanes
         pad['beltbrush_btn_reset'].enabled = lanes > 1
-        if not (belt_brush and not change) then
+        if not (belt_brush and change == 0) then
             create_or_destroy_bp(player, lanes)
         end
     else
@@ -523,10 +523,3 @@ local function increase_decrease_reprogrammer(event)
 end
 local events = {defines.events.on_player_cursor_stack_changed}
 Pad.register_events('beltbrush', increase_decrease_reprogrammer, events)
-
-local function init_and_load()
-    if remote.interfaces['PickerBlueprinter'] then
-        Event.set_event_name('on_blueprint_mirrored', remote.call('PickerBlueprinter', 'on_blueprint_mirrored'))
-    end
-end
-Event.register(Event.core_events.init_and_load, init_and_load)

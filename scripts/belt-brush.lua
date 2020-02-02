@@ -21,8 +21,8 @@ local match_to_brush = {
     ['pipe-to-ground'] = true,
     ['wall'] = true,
     ['heat-pipe'] = true,
-    ['rail'] = true,
-    ['straight-rail'] = true
+    --['rail'] = true,
+    --['straight-rail'] = true
 }
 
 --These items types will be automatically revived in belt brush BPs

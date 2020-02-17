@@ -1,11 +1,21 @@
 {
     "name": "PickerBeltTools",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "factorio_version": "0.18",
     "title": "Picker Belt Tools",
     "author": "Nexela",
     "contact": "nexela@gmail.com",
     "dependencies": ["base >= 0.18.0", "stdlib >= 1.2.0", "PickerAtheneum >= 1.1.0"],
     "homepage": "",
-    "description": "Beltbrush and Belt Reversing"
+    "description": "Beltbrush and Belt Reversing",
+    "package": {
+      "ignore": ["makefile"],
+      "scripts": {
+        "datestamp": ".vscode/datestamp.sh",
+        "prepackage": ".vscode/prepackage.sh",
+        "prepublish": ".vscode/prepublish.sh",
+        "publish": ".vscode/publish.sh",
+        "version": ".vscode/version.sh"
+      }
+    }
   }

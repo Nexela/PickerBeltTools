@@ -1322,7 +1322,7 @@ local function on_lua_shortcut(event)
 end
 Event.register(defines.events.on_lua_shortcut, on_lua_shortcut)
 
---! API HACK Toggle on the setting right away
+-- API HACK Toggle on the setting right away
 -- Can be removed if API ever gets added for default toggle state
 local function on_player_created(event)
     local player = Player.get(event.player_index)

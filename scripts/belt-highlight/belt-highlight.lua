@@ -767,7 +767,11 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                                 else
                                     if forward_entity_type ~= 'splitter' then
                                         local input = read_entity_data[forward_entity_unit_number][2].input
-                                        input[#input + 1] = {entity_unit_number, entity_direction}
+                                        if input then
+                                            input[#input + 1] = {entity_unit_number, entity_direction}
+                                        else
+                                            read_entity_data[forward_entity_unit_number][2].input = {{entity_unit_number, entity_direction}}
+                                        end
                                     else
                                         local neighbours = read_entity_data[forward_entity_unit_number][2]
                                         neighbours[splitter_input_side] = entity_unit_number
@@ -817,7 +821,11 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                             else
                                 if forward_entity_type ~= 'splitter' then
                                     local input = read_entity_data[forward_entity_unit_number][2].input
-                                    input[#input + 1] = {entity_unit_number, entity_direction}
+                                    if input then
+                                        input[#input + 1] = {entity_unit_number, entity_direction}
+                                    else
+                                        read_entity_data[forward_entity_unit_number][2].input = {{entity_unit_number, entity_direction}}
+                                    end
                                 else
                                     local neighbours = read_entity_data[forward_entity_unit_number][2]
                                     neighbours[splitter_input_side] = entity_unit_number
@@ -869,7 +877,11 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                             else
                                 if left_entity_type ~= 'splitter' then
                                     local input = read_entity_data[left_entity_unit_number][2].input
-                                    input[#input + 1] = {entity_unit_number, entity_direction}
+                                    if input then
+                                        input[#input + 1] = {entity_unit_number, entity_direction}
+                                    else
+                                        read_entity_data[left_entity_unit_number][2].input = {{entity_unit_number, entity_direction}}
+                                    end
                                 else
                                     local neighbours = read_entity_data[left_entity_unit_number][2]
                                     neighbours[splitter_input_side] = entity_unit_number
@@ -915,7 +927,11 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                             else
                                 if right_entity_type ~= 'splitter' then
                                     local input = read_entity_data[right_entity_unit_number][2].input
-                                    input[#input + 1] = {entity_unit_number, entity_direction}
+                                    if input then
+                                        input[#input + 1] = {entity_unit_number, entity_direction}
+                                    else
+                                        read_entity_data[right_entity_unit_number][2].input = {{entity_unit_number, entity_direction}}
+                                    end
                                 else
                                     local neighbours = read_entity_data[right_entity_unit_number][2]
                                     neighbours[splitter_input_side] = entity_unit_number

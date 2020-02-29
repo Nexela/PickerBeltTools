@@ -21,23 +21,24 @@ local match_to_brush = {
     ['pipe-to-ground'] = true,
     ['wall'] = true,
     ['heat-pipe'] = true,
-    --['rail'] = true,
-    --['straight-rail'] = true
+    ['inserter'] = true,
+    ['pipe'] = true,
+    -- ['container'] = true,
+    -- ['logistic-container'] = true,
+    -- ['rail'] = true,
+    -- ['straight-rail'] = true
 }
 
 --These items types will be automatically revived in belt brush BPs
 local match_to_revive = {
-    ['transport-belt'] = true,
-    ['underground-belt'] = true,
     ['splitter'] = true,
-    ['loader'] = true,
-    ['pipe-to-ground'] = true,
-    ['wall'] = true,
-    ['heat-pipe'] = true
 }
+table.merge(match_to_revive, match_to_brush)
 
-local function get_match(stack)
-    if stack.valid_for_read then
+local function get_match(stack, cursor_ghost)
+    if cursor_ghost then
+        return match_to_brush[cursor_ghost.place_result.type or 'nil'] and cursor_ghost.name
+    elseif stack.valid_for_read then
         if stack.prototype.place_result and match_to_brush[stack.prototype.place_result.type or 'nil'] then
             return stack.prototype.place_result.name
         elseif stack.is_blueprint and stack.is_blueprint_setup() then
@@ -104,7 +105,7 @@ end
 
 local function create_or_destroy_bp(player, lanes)
     local stack = player.cursor_stack
-    local name = get_match(stack)
+    local name = get_match(stack, player.cursor_ghost)
 
     if name then
         if lanes > 1 then
@@ -123,6 +124,7 @@ local function create_or_destroy_bp(player, lanes)
                 item.clear() -- clear the item from the inventory
             else
                 stack.clear() -- no item found, just nuke the cursor stack
+                player.cursor_ghost = name
             end
         end
     end
@@ -327,6 +329,19 @@ local function beltbrush_corners(event)
 end
 Event.register('picker-beltbrush-corners', beltbrush_corners)
 
+local function mirror_blueprint(event)
+    local blueprint = event.blueprint
+    if blueprint and blueprint.valid then
+        if blueprint.label and not event.corner then
+            if blueprint.label:find('Belt Brush Corner Left') then
+                blueprint.label = 'Belt Brush Corner Right ' .. blueprint.label:match('%d+')
+            elseif blueprint.label:find('Belt Brush Corner Right') then
+                blueprint.label = 'Belt Brush Corner Left ' .. blueprint.label:match('%d+')
+            end
+        end
+    end
+end
+
 -------------------------------------------------------------------------------
 --[Automatic Balancers]--
 -------------------------------------------------------------------------------
@@ -497,7 +512,7 @@ local function increase_decrease_reprogrammer(event)
     local stack = player.cursor_stack
     local belt_brush = Inventory.is_named_bp(stack, 'Belt Brush')
     local change = event.change or 0
-    if get_match(stack) or belt_brush then
+    if get_match(stack, player.cursor_ghost) or belt_brush then
         local pad = Pad.get_or_create_adjustment_pad(player, 'beltbrush')
         local text_field = pad['beltbrush_text_box']
         local lanes = belt_brush and stack.label:match('%d+') or tonumber(text_field.text) or 1
@@ -521,5 +536,14 @@ local function increase_decrease_reprogrammer(event)
         Pad.remove_gui(player, 'beltbrush_frame_main')
     end
 end
-local events = {defines.events.on_player_cursor_stack_changed}
+local events = {defines.events.on_player_cursor_stack_changed, 'picker-beltbrush-hack'}
 Pad.register_events('beltbrush', increase_decrease_reprogrammer, events)
+
+local function register_mirror_events()
+    local inter = remote.interfaces['PickerBlueprinter']
+    if inter and inter['get_event_name'] then
+        Event.set_event_name('on_blueprint_mirrored', remote.call('PickerBlueprinter', 'get_event_name'))
+        Event.register(Event.get_event_name('on_blueprint_mirrored'), mirror_blueprint)
+    end
+end
+Event.register(Event.core_events.init_and_load, register_mirror_events)

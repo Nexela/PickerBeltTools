@@ -37,7 +37,7 @@ local function show_underground_sprites(event)
     local markers_made = 0
     local surface = player.surface
 
-    --? Assign working table reference to global reference under player
+    -- Assign working table reference to global reference under player
     pdata.current_underground_marker_table = all_markers
 
     local player_color_pref = get_color(player.mod_settings)
@@ -150,7 +150,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     local markers_made = next(all_markers) and #all_markers or 0
     local player_color_pref = get_color(player.mod_settings)
 
-    --? Assign working table references to global reference under player
+    -- Assign working table references to global reference under player
     pdata.current_marker_table = all_markers
     pdata.current_beltnet_table = all_entities_marked
 
@@ -162,7 +162,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     end
     pdata.scheduled_markers[working_table] = pdata.scheduled_markers[working_table] or {}
 
-    --? Cache functions used more than once
+    -- Cache functions used more than once
     local find_belt = player.surface.find_entities_filtered
     local surface = player.surface
 
@@ -632,7 +632,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         else
             entity_neighbours.ug_input = previous_entity_unit_number and previous_entity_unit_number
         end
-        --? Cache current entity
+        -- Cache current entity
         local current_entity
         if not read_entity_data[entity_unit_number] then
             current_entity = {
@@ -668,7 +668,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             else
                 entity_neighbours.ug_input = previous_entity_unit_number and previous_entity_unit_number
             end
-            --? Cache current entity
+            -- Cache current entity
             local current_entity
             if not read_entity_data[entity_unit_number] then
                 current_entity = {
@@ -683,12 +683,12 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 belts_read = belts_read + 1
             end
             --rendering.draw_text{text = belts_read, surface = surface, color = {1,1,1,1}, target = entity_position}
-            --? Underground belt handling
+            -- Underground belt handling
             if entity_type == 'underground-belt' then
-                --? Transport belt stepping
+                -- Transport belt stepping
                 local ug_neighbour = entity.neighbours
                 local ug_belt_to_ground_type = entity.belt_to_ground_type
-                --? UG Belts always return an entity reference as the neighbour
+                -- UG Belts always return an entity reference as the neighbour
                 if ug_belt_to_ground_type == 'input' then
                     read_entity_data[entity_unit_number][6] = ug_belt_to_ground_type
                     if ug_neighbour then
@@ -784,7 +784,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     end
                 end
             elseif entity_type == 'transport-belt' then
-                --? Transport belt handling
+                -- Transport belt handling
                 local forward_position = Position(entity_position):translate(entity_direction, 1)
                 local forward_entity = read_forward_belt(forward_position)
                 if forward_entity then
@@ -965,7 +965,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     end
                 end
             end
-            --? Cache current entity
+            -- Cache current entity
             local current_entity
             if not read_entity_data[entity_unit_number] then
                 current_entity = {
@@ -1043,7 +1043,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     end
                 end
             end
-            --? Cache current entity
+            -- Cache current entity
             local current_entity
             if read_entity_data[entity_unit_number] then
                 current_entity = read_entity_data[entity_unit_number]

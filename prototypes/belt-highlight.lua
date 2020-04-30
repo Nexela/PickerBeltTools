@@ -4,7 +4,7 @@ Data {
     type = 'custom-input',
     name = 'picker-show-underground-belt-paths',
     key_sequence = 'CONTROL + SHIFT + U',
-    consuming = 'script-only'
+    consuming = 'none'
 }
 
 Data {

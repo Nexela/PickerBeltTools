@@ -66,10 +66,9 @@ local function revive_belts(event)
         local name = ghost.ghost_name
         if Position.distance(player.position, ghost.position) <= player.build_distance + 1 then
             if player.get_item_count(name) > 0 then
-                local _, revived = ghost.revive()
+                local _, revived = ghost.revive{raise_revive = true}
                 if revived then
                     player.remove_item({name = name, count = 1})
-                    script.raise_event(defines.events.on_built_entity, {created_entity = revived, player_index = player.index, revived = true})
                 end
             end
         end

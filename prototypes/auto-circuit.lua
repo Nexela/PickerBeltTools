@@ -9,8 +9,8 @@ data:extend{
          {
             filename = "__base__/graphics/icons/red-wire.png",
             priority = "extra-high-no-scale",
-            size = 32,
-            scale = 1,
+            size = 64,
+            scale = 0.5,
             flags = { "icon" }
          }
    }

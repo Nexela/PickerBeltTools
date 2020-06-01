@@ -523,6 +523,7 @@ local function increase_decrease_reprogrammer(event)
             end
         elseif event.element and event.element.name == 'beltbrush_btn_reset' then
             lanes = 1
+            belt_brush = false
         else
             lanes = lanes and math.min(math.max(1, lanes + change), 32) or 1
         end

@@ -514,12 +514,13 @@ local function increase_decrease_reprogrammer(event)
     if get_match(stack, player.cursor_ghost) or belt_brush then
         local pad = Pad.get_or_create_adjustment_pad(player, 'beltbrush')
         local text_field = pad['beltbrush_text_box']
-        local lanes = belt_brush and stack.label:match('%d+') or tonumber(text_field.text) or 1
+        local count = tonumber(text_field.text) or 1
+        local lanes = belt_brush and stack.label:match('%d+') or count
         if event.element and event.element.name == 'beltbrush_text_box' then
             if not tonumber(event.element.text) then
                 lanes = 1
             else
-                lanes = (tonumber(text_field.text) or 1) <= 32 and (tonumber(text_field.text) or 1) or 32
+                lanes = count <= 32 and count or 32
             end
         elseif event.element and event.element.name == 'beltbrush_btn_reset' then
             lanes = 1
@@ -527,7 +528,7 @@ local function increase_decrease_reprogrammer(event)
         else
             lanes = lanes and math.min(math.max(1, lanes + change), 32) or 1
         end
-        text_field.text = lanes
+        text_field.text = tostring(lanes)
         pad['beltbrush_btn_reset'].enabled = lanes > 1
         if not (belt_brush and change == 0) then
             create_or_destroy_bp(player, lanes)

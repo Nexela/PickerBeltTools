@@ -501,7 +501,7 @@ local function placed_blueprint(event)
         pdata.last_ghost_check = event.tick
     end
 end
-Event.register(defines.events.on_put_item, placed_blueprint)
+Event.register(defines.events.on_pre_build, placed_blueprint)
 
 -------------------------------------------------------------------------------
 --[Adjustment Pad]--

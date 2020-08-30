@@ -73,7 +73,7 @@ return {
 --         }
 --         local s = '  ["' .. name .. '"] = "'..stack.export_stack()..'",\n'
 --         game.write_file(script.mod_name .. '/balancers.lua', s ,true)
---         player.clean_cursor()
+--         player.clear_cursor()
 --     end
 --     game.write_file(script.mod_name .. '/balancers.lua', '}\n', true)
 -- end)

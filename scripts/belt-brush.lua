@@ -108,7 +108,7 @@ local function create_or_destroy_bp(player, lanes)
 
     if name then
         if lanes > 1 then
-            if not (Inventory.is_named_bp(stack, 'Belt Brush') or Inventory.is_named_bp(stack, 'Pipette Blueprint')) and player.clean_cursor() then
+            if not (Inventory.is_named_bp(stack, 'Belt Brush') or Inventory.is_named_bp(stack, 'Pipette Blueprint')) and player.clear_cursor() then
                 stack = lib.get_planner(player, 'picker-blueprint-tool', 'Belt Brush')
                 stack.clear_blueprint()
             end

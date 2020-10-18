@@ -1,10 +1,15 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.2.3
+Version: 1.2.4
 Date: ????
   Changes:
     - clean_cursor renamed to clear_cursor.
     - on_put_item renamed to on_pre_build.
     - use tonumber for text fields.
+---------------------------------------------------------------------------------------------------
+Version: 1.2.3
+Date: 2020-09-22
+  Bugfixes:
+    - Fix error when cusror_ghost is a tile.
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.2
 Date: 2020-05-24

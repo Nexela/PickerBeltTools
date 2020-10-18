@@ -37,7 +37,8 @@ table.merge(match_to_revive, match_to_brush)
 
 local function get_match(stack, cursor_ghost)
     if cursor_ghost then
-        return match_to_brush[cursor_ghost.place_result.type or 'nil'] and cursor_ghost.name
+        local result = cursor_ghost.place_as_tile_result or cursor_ghost.place_result
+        return match_to_brush[result and result.type or 'nil'] and cursor_ghost.name
     elseif stack.valid_for_read then
         if stack.prototype.place_result and match_to_brush[stack.prototype.place_result.type or 'nil'] then
             return stack.prototype.place_result.name

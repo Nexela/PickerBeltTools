@@ -1,21 +1,25 @@
 {
-    "name": "PickerBeltTools",
-    "version": "1.2.4",
-    "factorio_version": "0.18",
-    "title": "Picker Belt Tools",
-    "author": "Nexela",
-    "contact": "nexela@gmail.com",
-    "dependencies": ["base >= 0.18.0", "stdlib >= 1.2.0", "PickerAtheneum >= 1.1.0", "(?) PickerBlueprinter"],
-    "homepage": "",
-    "description": "Beltbrush and Belt Reversing",
-    "package": {
-      "ignore": [],
-      "scripts": {
-        "datestamp": "../PickerAtheneum/.publish/datestamp.sh",
-        "prepackage": "../PickerAtheneum/.publish/prepackage.sh",
-        "prepublish": "../PickerAtheneum/.publish/prepublish.sh",
-        "publish": "../PickerAtheneum/.publish/publish.sh",
-        "version": "../PickerAtheneum/.publish/version.sh"
-      }
+  "name": "PickerBeltTools",
+  "version": "1.2.4",
+  "factorio_version": "1.1",
+  "title": "Picker Belt Tools",
+  "author": "Nexela",
+  "contact": "nexela@gmail.com",
+  "dependencies": [
+    "base >= 1.1.0",
+    "stdlib >= 1.4.6",
+    "(?) PickerBlueprinter"
+  ],
+  "homepage": "",
+  "description": "Beltbrush and Belt Reversing",
+  "package": {
+    "ignore": [],
+    "scripts": {
+      "datestamp": "../PickerAtheneum/.publish/datestamp.sh",
+      "prepackage": "../PickerAtheneum/.publish/prepackage.sh",
+      "prepublish": "../PickerAtheneum/.publish/prepublish.sh",
+      "publish": "../PickerAtheneum/.publish/publish.sh",
+      "version": "../PickerAtheneum/.publish/version.sh"
     }
   }
+}

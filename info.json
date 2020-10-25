@@ -8,10 +8,11 @@
   "dependencies": [
     "base >= 1.1.0",
     "stdlib >= 1.4.6",
-    "(?) PickerBlueprinter"
+    "(?) PickerBlueprinter",
+    "(?) belt-reverser"
   ],
   "homepage": "",
-  "description": "Beltbrush and Belt Reversing",
+  "description": "Belt and Network wire tools",
   "package": {
     "ignore": [],
     "scripts": {

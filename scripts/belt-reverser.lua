@@ -9,6 +9,8 @@ local Position = require('__stdlib__/stdlib/area/position')
 local Direction = require('__stdlib__/stdlib/area/direction')
 local op_dir = Direction.opposite_direction
 
+if script.active_mods['belt-reverser'] then return end
+
 local belt_types = {
     ['transport-belt'] = true,
     ['loader'] = true,

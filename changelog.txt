@@ -1,6 +1,8 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.2.4
 Date: ????
+  Features:
+    - Added Wire tools, Rewire wires in an area, Remove all wires in an area.
   Changes:
     - clean_cursor renamed to clear_cursor.
     - on_put_item renamed to on_pre_build.

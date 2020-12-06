@@ -6,7 +6,7 @@ if settings.startup['picker-tool-wire-cutter'].value then
     Data{
         type = 'selection-tool',
         name = 'picker-wire-cutter',
-        icon = '__PickerExtended__/graphics/cord-cutter.png',
+        icon = '__PickerBeltTools__/graphics/cord-cutter.png',
         icon_size = 64,
         flags = {'hidden', 'only-in-cursor'},
         subgroup = 'tool',
@@ -26,7 +26,7 @@ if settings.startup['picker-tool-rewire'].value then
     Data{
         type = 'selection-tool',
         name = 'picker-rewire',
-        icon = '__PickerExtended__/graphics/rewire-tool.png',
+        icon = '__PickerBeltTools__/graphics/rewire-tool.png',
         icon_size = 32,
         flags = {'hidden', 'only-in-cursor'},
         subgroup = 'tool',

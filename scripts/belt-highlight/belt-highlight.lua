@@ -29,6 +29,104 @@ local function get_color(player_settings)
     }
 end
 
+-- Does a find_entities_filtered both for entities and ghosts, combining the two
+local function find_entities_and_ghosts_filtered(surface, filter)
+    local baseresults = surface.find_entities_filtered(filter)
+    
+    filter.ghost_type = filter.type
+    filter.type = "entity-ghost"
+    local ghostresults = surface.find_entities_filtered(filter)
+    
+    for _, entity in ipairs(ghostresults) do
+        table.insert(baseresults, entity)
+    end
+    
+    return baseresults
+end
+
+-- Looks for the first beltlike object in a certain place, falling back to ghosts if necessary
+local function find_belt(find_entities_filtered, filter)
+    local result = find_entities_filtered(filter)[1]
+    if result ~= nil then
+        return result
+    end
+    
+    -- do it again, but with ghosts this time
+    filter.ghost_type = filter.type
+    filter.ghost_name = filter.name
+    filter.type = "entity-ghost"
+    filter.name = nil
+    return find_entities_filtered(filter)[1]    -- if it's nil, so be it
+end
+
+-- Gets entity.name or entity.ghost_name as appropriate
+local function name_through_ghost(entity)
+    local t = entity.name
+    if t ~= "entity-ghost" then
+        return t
+    end
+    
+    return entity.ghost_name
+end
+
+-- Gets entity.type or entity.ghost_type as appropriate
+local function type_through_ghost(entity)
+    local t = entity.type
+    if t ~= "entity-ghost" then
+        return t
+    end
+    
+    return entity.ghost_type
+end
+
+-- Returns entity.neighbors, possibly deriving this by hand if necessary
+-- (only really works for underneathies)
+local function neighbours_through_ghost(entity)
+    if entity.type ~= 'entity-ghost' then
+        -- If this isn't a ghost we just check for the accurate data and we're done
+        local neighbours = entity.neighbours
+        if neighbours ~= nil then
+            return neighbours
+        end
+        
+        -- If we don't have accurate data then we may be paired with a ghost :(
+    end
+    
+    local surface = entity.surface
+    local entity_name = name_through_ghost(entity)
+    local entity_position = entity.position
+    local entity_direction = entity.direction
+    local find_entities_filtered = surface.find_entities_filtered
+    
+    -- Determine if we're traversing "forwards" or "backwards" to find its matching pair
+    local flip = (entity.belt_to_ground_type == "input") and 1 or -1
+    
+    -- Iterate over the direction it can reach
+    for dist = 1,entity.ghost_prototype.max_underground_distance do
+        local target = Position(entity_position):translate(entity_direction, dist * flip)
+        local beltlike = find_belt(
+            find_entities_filtered,
+            {
+                position = target,
+                name = entity_name
+            })
+        
+        if beltlike ~= nil and beltlike.direction == entity.direction then
+            if beltlike.belt_to_ground_type == entity.belt_to_ground_type then
+                -- this is another entrance of the same type
+                -- stop immediately, because any opposite underneathie after this will be connected to this one
+                return nil
+            else
+                -- this is the opposite underneathie; we've found our match!
+                return beltlike
+            end
+        end
+    end
+    
+    -- We didn't find anything. Sorry!
+    return nil
+end
+
 local function show_underground_sprites(event)
     local player, pdata = Player.get(event.player_index)
     local read_entity_data = {}
@@ -46,10 +144,10 @@ local function show_underground_sprites(event)
         type = 'underground-belt',
         force = player.force
     }
-    for _, entity in pairs(player.surface.find_entities_filtered(filter)) do
+    for _, entity in pairs(find_entities_and_ghosts_filtered(player.surface, filter)) do
         local entity_unit_number = entity.unit_number
         local entity_position = entity.position
-        local entity_neighbours = entity.neighbours
+        local entity_neighbours = neighbours_through_ghost(entity)
         local entity_belt_direction = entity.belt_to_ground_type
         local entity_direction = entity.direction
         --local entity_name = entity.name
@@ -163,16 +261,17 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     pdata.scheduled_markers[working_table] = pdata.scheduled_markers[working_table] or {}
 
     -- Cache functions used more than once
-    local find_belt = player.surface.find_entities_filtered
+    local find_entities_filtered = player.surface.find_entities_filtered
     local surface = player.surface
-
+    
     local function read_forward_belt(forward_position)
         return find_belt(
+            find_entities_filtered,
             {
                 position = forward_position,
                 type = {'transport-belt', 'underground-belt', 'splitter'}
             }
-        )[1]
+        )
     end
 
     -- TODO Make two individual point checks and return two entry table
@@ -183,20 +282,22 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         return {
             left_entity = {
                 entity = find_belt(
+                    find_entities_filtered,
                     {
                         position = left_pos,
                         type = {'transport-belt', 'underground-belt', 'splitter'}
                     }
-                )[1],
+                ),
                 position = left_pos
             },
             right_entity = {
                 entity = find_belt(
+                    find_entities_filtered,
                     {
                         position = right_pos,
                         type = {'transport-belt', 'underground-belt', 'splitter'}
                     }
-                )[1],
+                ),
                 position = right_pos
             }
         }
@@ -358,31 +459,34 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local right_feed_position = Position(current_entity[1]):translate(right_feed_direction_check, 1)
         local left_feed_entity =
             find_belt(
+            find_entities_filtered,
             {
                 position = left_feed_position,
                 type = {'transport-belt', 'underground-belt', 'splitter'}
             }
-        )[1]
+        )
         local rear_feed_entity =
             find_belt(
+            find_entities_filtered,
             {
                 position = rear_feed_position,
                 type = {'transport-belt', 'underground-belt', 'splitter'}
             }
-        )[1]
+        )
         local right_feed_entity =
             find_belt(
+            find_entities_filtered,
             {
                 position = right_feed_position,
                 type = {'transport-belt', 'underground-belt', 'splitter'}
             }
-        )[1]
+        )
         local backstep_data = {}
         local left_feed_direction = left_feed_entity and left_feed_entity.direction or nil
         local rear_feed_direction = rear_feed_entity and rear_feed_entity.direction or nil
         local right_feed_direction = right_feed_entity and right_feed_entity.direction or nil
         if left_feed_direction and left_feed_direction == op_dir(left_feed_direction_check) then
-            local left_feed_type = left_feed_entity.type
+            local left_feed_type = type_through_ghost(left_feed_entity)
             local belt_to_ground_direction = left_feed_type == 'underground-belt' and left_feed_entity.belt_to_ground_type
             if belt_to_ground_direction ~= 'input' then
                 backstep_data.left_feed_entity_data = {
@@ -396,7 +500,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             end
         end
         if rear_feed_direction and rear_feed_direction == op_dir(rear_feed_direction_check) then
-            local rear_feed_type = rear_feed_entity.type
+            local rear_feed_type = type_through_ghost(rear_feed_entity)
             local belt_to_ground_direction = rear_feed_type == 'underground-belt' and rear_feed_entity.belt_to_ground_type
             if belt_to_ground_direction ~= 'input' then
                 backstep_data.rear_feed_entity_data = {
@@ -410,7 +514,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             end
         end
         if right_feed_direction and right_feed_direction == op_dir(right_feed_direction_check) then
-            local right_feed_type = right_feed_entity.type
+            local right_feed_type = type_through_ghost(right_feed_entity)
             local belt_to_ground_direction = right_feed_type == 'underground-belt' and right_feed_entity.belt_to_ground_type
             if belt_to_ground_direction ~= 'input' then
                 backstep_data.right_feed_entity_data = {
@@ -433,23 +537,25 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local right_feed_position = Position(current_entity[1]):translate(right_feed_direction_check, 1)
         local left_feed_entity =
             find_belt(
+            find_entities_filtered,
             {
                 position = left_feed_position,
                 type = {'transport-belt', 'underground-belt', 'splitter'}
             }
-        )[1]
+        )
         local right_feed_entity =
             find_belt(
+            find_entities_filtered,
             {
                 position = right_feed_position,
                 type = {'transport-belt', 'underground-belt', 'splitter'}
             }
-        )[1]
+        )
         local backstep_data = {}
         local left_feed_direction = left_feed_entity and left_feed_entity.direction or nil
         local right_feed_direction = right_feed_entity and right_feed_entity.direction or nil
         if left_feed_direction and left_feed_direction == op_dir(left_feed_direction_check) then
-            local left_feed_type = left_feed_entity.type
+            local left_feed_type = type_through_ghost(left_feed_entity)
             local belt_to_ground_direction = left_feed_type == 'underground-belt' and left_feed_entity.belt_to_ground_type
             if belt_to_ground_direction ~= 'input' then
                 backstep_data.left_feed_entity_data = {
@@ -463,7 +569,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             end
         end
         if right_feed_direction and right_feed_direction == op_dir(right_feed_direction_check) then
-            local right_feed_type = right_feed_entity.type
+            local right_feed_type = type_through_ghost(right_feed_entity)
             local belt_to_ground_direction = right_feed_type == 'underground-belt' and right_feed_entity.belt_to_ground_type
             if belt_to_ground_direction ~= 'input' then
                 backstep_data.right_feed_entity_data = {
@@ -485,23 +591,25 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local right_feed_position = current_entity[1] + shift_directions.left
         local left_feed_entity =
             find_belt(
+            find_entities_filtered,
             {
                 position = left_feed_position,
                 type = {'transport-belt', 'underground-belt', 'splitter'}
             }
-        )[1]
+        )
         local right_feed_entity =
             find_belt(
+            find_entities_filtered,
             {
                 position = right_feed_position,
                 type = {'transport-belt', 'underground-belt', 'splitter'}
             }
-        )[1]
+        )
         local backstep_data = {}
         local left_feed_direction = left_feed_entity and left_feed_entity.direction or nil
         local right_feed_direction = right_feed_entity and right_feed_entity.direction or nil
         if left_feed_direction and left_feed_direction == current_entity[4] then
-            local left_feed_type = left_feed_entity.type
+            local left_feed_type = type_through_ghost(left_feed_entity)
             local belt_to_ground_direction = left_feed_type == 'underground-belt' and left_feed_entity.belt_to_ground_type
             if belt_to_ground_direction ~= 'input' then
                 backstep_data.left_feed_entity_data = {
@@ -515,7 +623,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             end
         end
         if right_feed_direction and right_feed_direction == current_entity[4] then
-            local right_feed_type = right_feed_entity.type
+            local right_feed_type = type_through_ghost(right_feed_entity)
             local belt_to_ground_direction = right_feed_type == 'underground-belt' and right_feed_entity.belt_to_ground_type
             if belt_to_ground_direction ~= 'input' then
                 backstep_data.right_feed_entity_data = {
@@ -535,7 +643,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
         local unit_number = entity.unit_number
         destroy(all_entities_marked[unit_number])
         all_entities_marked[unit_number] = nil
-        local entity_type = entity.type
+        local entity_type = type_through_ghost(entity)
         local entity_position = entity.position
         local entity_direction = entity.direction
         local belt_to_ground_direction = entity_type == 'underground-belt' and entity.belt_to_ground_type
@@ -556,7 +664,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             local forward_entity = read_forward_belt(forward_position)
             if forward_entity then
                 local forward_entity_direction = forward_entity.direction
-                local forward_entity_type = forward_entity.type
+                local forward_entity_type = type_through_ghost(forward_entity)
                 if not (forward_entity_direction == op_dir(entity_direction)) and not (forward_entity_type == 'underground-belt' and forward_entity_direction == entity_direction and forward_entity.belt_to_ground_type == 'output') and not (forward_entity_type == 'splitter' and forward_entity_direction ~= entity_direction) then
                     local forward_entity_unit_number = forward_entity.unit_number
                     entity_neighbours.output_target = forward_entity_unit_number
@@ -568,7 +676,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 entity_neighbours.input[#entity_neighbours.input + 1] = {entities[5].unit_number, entities[4]}
             end
         elseif entity_type == 'underground-belt' then
-            local ug_neighbour = entity.neighbours
+            local ug_neighbour = neighbours_through_ghost(entity)
             local ug_belt_to_ground_type = entity.belt_to_ground_type
             if ug_belt_to_ground_type == 'input' then
                 read_entity_data[entity_unit_number][6] = ug_belt_to_ground_type
@@ -581,7 +689,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 local forward_entity = read_forward_belt(forward_position)
                 if forward_entity then
                     local forward_entity_direction = forward_entity.direction
-                    local forward_entity_type = forward_entity.type
+                    local forward_entity_type = type_through_ghost(forward_entity)
                     if not (forward_entity_direction == op_dir(entity_direction)) and not (forward_entity_type == 'underground-belt' and forward_entity_direction == entity_direction and forward_entity.belt_to_ground_type == 'output') and not (forward_entity_type == 'splitter' and forward_entity_direction ~= entity_direction) then
                         local forward_entity_unit_number = forward_entity.unit_number
                         entity_neighbours.output_target = forward_entity_unit_number
@@ -601,7 +709,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             local forward_entities = read_forward_splitter(entity_position, entity_direction)
             if forward_entities.left_entity.entity then
                 local left_entity_direction = forward_entities.left_entity.entity.direction
-                local left_entity_type = forward_entities.left_entity.entity.type
+                local left_entity_type = type_through_ghost(forward_entities.left_entity.entity)
                 if not (left_entity_direction == op_dir(entity_direction)) and not (left_entity_type == 'underground-belt' and left_entity_direction == entity_direction and forward_entities.left_entity.entity.belt_to_ground_type == 'output') and not (left_entity_type == 'splitter' and left_entity_direction ~= entity_direction) then
                     local left_entity_unit_number = forward_entities.left_entity.entity.unit_number
                     entity_neighbours.left_output_target = left_entity_unit_number
@@ -609,7 +717,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             end
             if forward_entities.right_entity.entity then
                 local right_entity_direction = forward_entities.right_entity.entity.direction
-                local right_entity_type = forward_entities.right_entity.entity.type
+                local right_entity_type = type_through_ghost(forward_entities.right_entity.entity)
                 if not (right_entity_direction == op_dir(entity_direction)) and not (right_entity_type == 'underground-belt' and right_entity_direction == entity_direction and forward_entities.right_entity.entity.belt_to_ground_type == 'output') and not (right_entity_type == 'splitter' and right_entity_direction ~= entity_direction) then
                     local right_entity_unit_number = forward_entities.right_entity.entity.unit_number
                     entity_neighbours.right_output_target = right_entity_unit_number
@@ -653,7 +761,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     local function read_belts(starter_entity)
         local starter_unit_number = starter_entity.unit_number
         local starter_entity_direction = starter_entity.direction
-        local starter_entity_type = starter_entity.type
+        local starter_entity_type = type_through_ghost(starter_entity)
         local starter_entity_position = starter_entity.position
 
         local function step_forward(entity, entity_unit_number, entity_position, entity_type, entity_direction, belt_to_ground_direction, previous_entity_unit_number, previous_entity_direction, previous_entity_input_side)
@@ -686,7 +794,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             -- Underground belt handling
             if entity_type == 'underground-belt' then
                 -- Transport belt stepping
-                local ug_neighbour = entity.neighbours
+                local ug_neighbour = neighbours_through_ghost(entity)
                 local ug_belt_to_ground_type = entity.belt_to_ground_type
                 -- UG Belts always return an entity reference as the neighbour
                 if ug_belt_to_ground_type == 'input' then
@@ -735,7 +843,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                     local forward_entity = read_forward_belt(forward_position)
                     if forward_entity then
                         local forward_entity_direction = forward_entity.direction
-                        local forward_entity_type = forward_entity.type
+                        local forward_entity_type = type_through_ghost(forward_entity)
                         if not (forward_entity_direction == op_dir(entity_direction)) and not (forward_entity_type == 'underground-belt' and forward_entity_direction == entity_direction and forward_entity.belt_to_ground_type == 'output') and not (forward_entity_type == 'splitter' and forward_entity_direction ~= entity_direction) then
                             local forward_entity_unit_number = forward_entity.unit_number
                             entity_neighbours.output_target = forward_entity_unit_number
@@ -789,7 +897,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 local forward_entity = read_forward_belt(forward_position)
                 if forward_entity then
                     local forward_entity_direction = forward_entity.direction
-                    local forward_entity_type = forward_entity.type
+                    local forward_entity_type = type_through_ghost(forward_entity)
                     if not (forward_entity_direction == op_dir(entity_direction)) and not (forward_entity_type == 'underground-belt' and forward_entity_direction == entity_direction and forward_entity.belt_to_ground_type == 'output') and not (forward_entity_type == 'splitter' and forward_entity_direction ~= entity_direction) then
                         local forward_entity_unit_number = forward_entity.unit_number
                         entity_neighbours.output_target = forward_entity_unit_number
@@ -840,7 +948,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 local forward_entities = read_forward_splitter(entity_position, entity_direction)
                 if forward_entities.left_entity.entity then
                     local left_entity_direction = forward_entities.left_entity.entity.direction
-                    local left_entity_type = forward_entities.left_entity.entity.type
+                    local left_entity_type = type_through_ghost(forward_entities.left_entity.entity)
                     local left_entity_position = forward_entities.left_entity.position
                     if not (left_entity_direction == op_dir(entity_direction)) and not (left_entity_type == 'underground-belt' and left_entity_direction == entity_direction and forward_entities.left_entity.entity.belt_to_ground_type == 'output') and not (left_entity_type == 'splitter' and left_entity_direction ~= entity_direction) then
                         local left_entity_unit_number = forward_entities.left_entity.entity.unit_number
@@ -894,7 +1002,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
                 end
                 if forward_entities.right_entity.entity then
                     local right_entity_direction = forward_entities.right_entity.entity.direction
-                    local right_entity_type = forward_entities.right_entity.entity.type
+                    local right_entity_type = type_through_ghost(forward_entities.right_entity.entity)
                     local right_entity_position = forward_entities.right_entity.position
                     if not (right_entity_direction == op_dir(entity_direction)) and not (right_entity_type == 'underground-belt' and right_entity_direction == entity_direction and forward_entities.right_entity.entity.belt_to_ground_type == 'output') and not (right_entity_type == 'splitter' and right_entity_direction ~= entity_direction) then
                         local right_entity_unit_number = forward_entities.right_entity.entity.unit_number
@@ -1061,7 +1169,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             read_entity_data[entity_unit_number] = current_entity
             --rendering.draw_text{text = belts_read, surface = surface, color = {1,0,1,1}, target = entity_position}
             if entity_type == 'underground-belt' then
-                local ug_neighbour = entity.neighbours
+                local ug_neighbour = neighbours_through_ghost(entity)
                 local ug_belt_to_ground_type = entity.belt_to_ground_type
                 if ug_belt_to_ground_type == 'output' then
                     read_entity_data[entity_unit_number][6] = ug_belt_to_ground_type
@@ -1237,7 +1345,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
     for unit_number, current_entity in pairs(read_entity_data) do
         if not all_entities_marked[unit_number] then
             if current_entity[3] == 'underground-belt' and current_entity[6] == 'input' and current_entity[2].ug_output_target then
-                local neighbour_entity = read_entity_data[current_entity[2].ug_output_target] and read_entity_data[current_entity[2].ug_output_target][5] or current_entity[5].neighbours
+                local neighbour_entity = read_entity_data[current_entity[2].ug_output_target] and read_entity_data[current_entity[2].ug_output_target][5] or neighbours_through_ghost(current_entity[5])
                 mark_ug_belt(unit_number, current_entity)
                 mark_ug_segment(current_entity, neighbour_entity)
             elseif current_entity[3] == 'transport-belt' then
@@ -1293,7 +1401,7 @@ local function check_selection(event)
     local player, pdata = Player.get(event.player_index)
     if player.is_shortcut_toggled('picker-belt-highlighter') then
         local selection = player.selected
-        if selection and tables.allowed_types[selection.type] then
+        if selection and tables.allowed_types[type_through_ghost(selection)] then
             pdata.current_beltnet_table = pdata.current_beltnet_table or {}
             pdata.current_marker_table = pdata.current_marker_table or {}
             pdata.scheduled_markers = pdata.scheduled_markers or {}

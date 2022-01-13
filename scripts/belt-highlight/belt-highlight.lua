@@ -79,6 +79,15 @@ local function type_through_ghost(entity)
     return entity.ghost_type
 end
 
+-- Gets entity.prototype or entity.ghost_prototype as appropriate
+local function prototype_through_ghost(entity)
+    if entity.type ~= "entity-ghost" then
+        return entity.prototype
+    end
+    
+    return entity.ghost_prototype
+end
+
 -- Returns entity.neighbors, possibly deriving this by hand if necessary
 -- (only really works for underneathies)
 local function neighbours_through_ghost(entity)
@@ -102,7 +111,7 @@ local function neighbours_through_ghost(entity)
     local flip = (entity.belt_to_ground_type == "input") and 1 or -1
     
     -- Iterate over the direction it can reach
-    for dist = 1,entity.ghost_prototype.max_underground_distance do
+    for dist = 1,prototype_through_ghost(entity).max_underground_distance do
         local target = Position(entity_position):translate(entity_direction, dist * flip)
         local beltlike = find_belt(
             find_entities_filtered,

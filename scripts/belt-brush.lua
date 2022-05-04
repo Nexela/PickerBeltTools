@@ -52,7 +52,7 @@ local function get_match(stack, cursor_ghost)
                         return match_to_brush[game.entity_prototypes[v.name].type]
                     end
                 )
-                return ent and ent.name
+                return ent and ent.name ---@diagnostic disable-line: need-check-nil
             end
         end
     end
@@ -135,7 +135,7 @@ end
 -------------------------------------------------------------------------------
 local function mirror_corners(stack)
     local entities = stack.get_blueprint_entities()
-    for i, entity in pairs(entities) do
+    for _, entity in pairs(entities) do
         entity.direction = (0 - (entity.direction or 0)) % 8
         entity.position.x = -1 * entity.position.x
     end
@@ -419,7 +419,7 @@ local function beltbrush_balancers(event)
                 return game.entity_prototypes[v.name].type == 'underground-belt'
             end
         )
-        belt = belt and belt.name
+        belt = belt and belt.name ---@diagnostic disable-line: need-check-nil
         if belt then
             local kind = belt:gsub('transport%-belt', '')
             local current = stack.label:gsub('Belt Brush Balancers %d+x', '')

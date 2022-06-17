@@ -52,7 +52,7 @@ local function get_match(stack, cursor_ghost)
                         return match_to_brush[game.entity_prototypes[v.name].type]
                     end
                 )
-                return ent and ent.name ---@diagnostic disable-line: need-check-nil
+                return ent and ent.name
             end
         end
     end
@@ -419,7 +419,7 @@ local function beltbrush_balancers(event)
                 return game.entity_prototypes[v.name].type == 'underground-belt'
             end
         )
-        belt = belt and belt.name ---@diagnostic disable-line: need-check-nil
+        belt = belt and belt.name ---@type string
         if belt then
             local kind = belt:gsub('transport%-belt', '')
             local current = stack.label:gsub('Belt Brush Balancers %d+x', '')

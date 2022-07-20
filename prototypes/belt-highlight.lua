@@ -17,7 +17,7 @@ Data {
         priority = 'extra-high-no-scale',
         size = 32,
         scale = 1,
-        flags = {'icon'}
+        flags = { 'icon' }
     }
 }
 
@@ -47,24 +47,24 @@ belt_marker_box[#belt_marker_box + 1] = {
 local belt_sprite_prototypes = {}
 do
     local i = 1
-        for x = 0, 512 - 32, 32 do
-            belt_sprite_prototypes[i] = {
-                type = 'sprite',
-                name = 'picker-belt-marker-' .. i,
-                width = 32,
-                height = 32,
-                x = x,
-                y = 0,
-                filename = '__PickerBeltTools__/graphics/entity/markers/belt-arrows.png'
-            }
-            i = i + 1
-        end
+    for x = 0, 512 - 32, 32 do
+        belt_sprite_prototypes[i] = {
+            type = 'sprite',
+            name = 'picker-belt-marker-' .. i,
+            width = 32,
+            height = 32,
+            x = x,
+            y = 0,
+            filename = '__PickerBeltTools__/graphics/entity/markers/belt-arrows.png'
+        }
+        i = i + 1
+    end
 end
 
 local splitter_table = {
     ['splitter-markers'] = {
-        size = {x = 64, y = 32},
-        width = {x = 256, y = 128}
+        size = { x = 64, y = 32 },
+        width = { x = 256, y = 128 }
     },
 }
 
@@ -92,29 +92,29 @@ end
 local ug_belt_sprite_prototypes = {}
 do
     local i = 1
-        for x = 0, 512 - 32, 32 do
-            ug_belt_sprite_prototypes[i] = {
-                type = 'sprite',
-                name = 'picker-ug-belt-marker-' .. i,
-                layers = {
-                    {
-                        width = 32,
-                        height = 32,
-                        x = x,
-                        y = 0,
-                        filename = '__PickerBeltTools__/graphics/entity/markers/belt-arrows.png'
-                    },
-                    {
-                        width = 64,
-                        height = 64,
-                        x = 256,
-                        scale = 0.5,
-                        filename = '__core__/graphics/cursor-boxes-32x32.png'
-                    }
+    for x = 0, 512 - 32, 32 do
+        ug_belt_sprite_prototypes[i] = {
+            type = 'sprite',
+            name = 'picker-ug-belt-marker-' .. i,
+            layers = {
+                {
+                    width = 32,
+                    height = 32,
+                    x = x,
+                    y = 0,
+                    filename = '__PickerBeltTools__/graphics/entity/markers/belt-arrows.png'
+                },
+                {
+                    width = 64,
+                    height = 64,
+                    x = 256,
+                    scale = 0.5,
+                    filename = '__core__/graphics/cursor-boxes-32x32.png'
                 }
             }
-            i = i + 1
-        end
+        }
+        i = i + 1
+    end
 end
 
 data:extend(belt_sprite_prototypes)

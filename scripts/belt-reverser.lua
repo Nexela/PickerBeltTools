@@ -23,7 +23,7 @@ local function replace_line_contents(line, contents)
     local current = 0
 
     for _, name in pairs(contents) do
-        line.insert_at(current, {name = name, count = 1})
+        line.insert_at(current, { name = name, count = 1 })
         current = current + (0.03125 * 9)
     end
 end
@@ -50,7 +50,7 @@ local function flip_lines(belt)
 end
 
 local function getBeltLike(surface, position, type)
-    return surface.find_entities_filtered {position = position, type = type}[1]
+    return surface.find_entities_filtered { position = position, type = type }[1]
 end
 
 local function isBeltTerminatingDownstream(belt, distance)
@@ -72,7 +72,7 @@ local function isBeltTerminatingDownstream(belt, distance)
     return true
 end
 
-local function isBeltSideloadingDownstream(belt, distance)
+local function isBeltSideLoadingDownstream(belt, distance)
     distance = distance or 1
     local pos = Position(belt.position):translate(belt.direction, distance)
     local downstreamBelt = getBeltLike(belt.surface, pos, 'transport-belt')
@@ -162,7 +162,7 @@ local function get_next_downstream_transport_line(belt)
     if isBeltTerminatingDownstream(belt, distance) then
         return nil
     end
-    if isBeltSideloadingDownstream(belt, distance) then
+    if isBeltSideLoadingDownstream(belt, distance) then
         return nil
     end
     local returnBelt = downstreamBelt or downstreamUGBelt or downstreamLoader

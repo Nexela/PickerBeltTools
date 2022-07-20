@@ -14,6 +14,6 @@ data:extend {
         name = 'picker-beltbrush-hack',
         key_sequence = '',
         linked_game_control = 'clear-cursor',
-        localised_name = "Beltbrush Hack"
+        localised_name = 'Beltbrush Hack'
     }
 }

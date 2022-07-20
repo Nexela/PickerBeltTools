@@ -48,5 +48,5 @@ local function on_built_entity(event)
         end
     end
 end
-local events = {defines.events.on_robot_built_entity, defines.events.on_built_entity}
+local events = { defines.events.on_robot_built_entity, defines.events.on_built_entity }
 Event.register(events, on_built_entity)

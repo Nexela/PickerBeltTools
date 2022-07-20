@@ -1,6 +1,7 @@
 -------------------------------------------------------------------------------
 --[Exported Blueprints]--
 -------------------------------------------------------------------------------
+---@diagnostic disable
 return {
     ['1x1'] = '0eNqVktFqwzAMRf9Fz+6IvbXJ/CtljKQVw+AoxlZHQ/C/T0kYlNWjzZORLB1diTtB5y8YoiMGO4E7DZTAHidI7otaP+d4DAgWHGMPCqjt54hjSykMkXcdeoaswNEZr2B1Vg+bU/COGeNNm8kfCpDYscNVwBKMn3TpO6m0+r/RCsKQpG2geZ6gdlI6ymOEfnYRT+ufmYX9gZrNUJ0LmNenMdWvtALl7WlKecFDgbnfyizud9i6n358+vreDfdHr172C7AqqWo2qpLVxGOLE+2N6xX4Vtokp69aom+Mab1nUxtTvTe6rnP+AbIrDI0=',
     ['2x1'] = '0eNqVkdGKwjAQRf/lPqfSRHer+RURad1hCaTTkIxiKfl30y4Lsrrs+niHnDOXyYTOnylExwI7wZ0GTrD7Ccl9cuvnmYyBYOGEeihw289JYsspDFGqjrwgKzj+oCuszupPOAXvRCjeYSYfFIjFiaOvAksYj3zuu/LS6t9WK4QhFWzgeV9R1QojbKXz3OSHxTx2eOCrevW2KOpnhvWLPZ7W2PxbUulvS7nPckV792MKvi1cmZmrLulCMS3s+7Yxpt5tddPkfAMILqCW',

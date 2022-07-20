@@ -175,7 +175,7 @@ local function highlight_belts(selected_entity, player_index, forward, backward,
             [1]
     end
 
-    -- TODO Make two individual point checks and return two entry table
+    ---@todo Make two individual point checks and return two entry table
     local function read_forward_splitter(entity_position, entity_direction)
         local shift_directions = tables.splitter_offsets[entity_direction]
         local left_pos = entity_position + shift_directions.left
@@ -1410,7 +1410,7 @@ local function on_lua_shortcut(event)
 end
 Event.register(defines.events.on_lua_shortcut, on_lua_shortcut)
 
--- API HACK Toggle on the setting right away
+---@api for default toggle state
 -- Can be removed if API ever gets added for default toggle state
 local function on_player_created(event)
     local player = Player.get(event.player_index)
